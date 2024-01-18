@@ -56,7 +56,7 @@ def character_segmentation(th_img):
 
 # Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 def start():
-    limit = 3
+    limit = 10
     count = 0
     for file in image_list:
         start_time = time.time()
@@ -134,8 +134,6 @@ def start():
         count = count + 1
         if count == limit:
             break
-
-
 
 
 start()
