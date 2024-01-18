@@ -67,48 +67,27 @@ def start():
             image_path = image_dir + "/" + file
             image = cv2.imread(image_path)
             greyscale_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            # cv2.imshow("converted input RGB image", greyscale_img)  # todo: make optional to show (on verbose flag enabled)
-            # todo: matplotlib for all of them showing inputs and outputs etc
 
             # apply iterative bilateral filter
             filtered_image = iterative_bilateral_filter(greyscale_img)
-            # cv2.imshow("Iterative iterative_bilateral_filter Filter", filtered_image)
 
             # adaptative histogram equalisation
             # AHE reference: https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
             ahe = cv2.createCLAHE(clipLimit=2.2, tileGridSize=(16, 16))
             ahe_img = ahe.apply(filtered_image)
 
-            # cv2.imshow("AHE on " + file, ahe_img)
-
             # apply otsu's method of automatic thresholding
             # reference: Applying Otsu's method of thresholding. https://docs.opencv.org/3.4/d7/d4d/tutorial_py_thresholding.html
             th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
-            title = "Otsu's Method: " + file + " threshold value: " + str(th_val)
-            # cv2.imshow("Input RGB image", image)
-            # cv2.imshow(title, th_img)
 
             # Character Segmentation and Extraction
-            # Connected-Component Analysis
             char_img, rect_border, characters = character_segmentation(th_img)
-            # cv2.imshow("Characters", char_img)
-
-
-
-            # for char in characters:
-            #     cv2.imshow("char", char)
-            #     cv2.waitKey(0)
 
             # bilinear transformation - tilt detection and correction
             # correcting tilt can be done after, once we have the characters, means theres less to work with?
 
             print("%s took %s seconds" % (file, time.time() - start_time))
-
-            # todo: retire cv2 showwindow and apply into windowed / structured matplotlib instead.
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
-            #
             count = count + 1
 
             """--- DISPLAY PROCESSED IMAGES --- Reference (Display multiple images in matplotlib): 
@@ -145,7 +124,7 @@ def start():
                 plt.axis("off")
                 i = i + 1
 
-            plt.subplots_adjust(wspace=0.2, hspace=0.5)
+            plt.subplots_adjust(hspace=0.5)
             plt.show()
 
             if count == limit:
