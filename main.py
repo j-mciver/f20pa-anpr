@@ -15,8 +15,6 @@ def apply_bilateral_filter(img):
 
 # reference: bilateral filter algorithm https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 IBF_THRESHOLD = 1.00
-
-
 def iterative_bilateral_filter(img):
     fimg = apply_bilateral_filter(img)
     psnr = cv2.PSNR(img, fimg)
@@ -43,10 +41,11 @@ def character_segmentation(th_img):
         w = stats[i, cv2.CC_STAT_WIDTH]
         h = stats[i, cv2.CC_STAT_HEIGHT]
         area = stats[i, cv2.CC_STAT_AREA]
-        print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(i, numLabels, w, h, area))
+        print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(i + 1, numLabels, w, h, area))
 
         # filter connected components by width, height and area of pixels
-        if all((5 < w < 50, 45 < h < 65, 500 < area < 1500)):
+        if all((5 < w < 50, 45 < h < 65, 420 < area < 1500)):
+            print("Keeping component {}".format(text))
             componentMask = (labels == i).astype("uint8") * 255
             characters.append(componentMask)
             rect_border.append([x, y, w, h])
@@ -57,7 +56,7 @@ def character_segmentation(th_img):
 
 # Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 def start():
-    limit = 1
+    limit = 3
     count = 0
     for file in image_list:
         start_time = time.time()
@@ -87,48 +86,56 @@ def start():
             # bilinear transformation - tilt detection and correction
             # correcting tilt can be done after, once we have the characters, means theres less to work with?
 
-            print("%s took %s seconds" % (file, time.time() - start_time))
-            count = count + 1
+            print("%s took %s seconds\n" % (file, time.time() - start_time))
 
-            """--- DISPLAY PROCESSED IMAGES --- Reference (Display multiple images in matplotlib): 
-            https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/"""
-            # IF -v (verbose flag enabled) ... show
-            rows = 3
-            cols = 3
+        """--- DISPLAY PROCESSED IMAGES --- 
+            Contents are only displayed if -v command line arg is provided (verbose flag enabled)
+        """
+        # IF -v (verbose flag enabled) ... show
+        rows = 3
+        cols = 3
 
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # OpenCV reads images BGR, matplotlib reads in RGB. Convert.
-            greyscale_img = cv2.cvtColor(greyscale_img, cv2.COLOR_BGR2RGB)
-            filtered_image = cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB)
-            ahe_img = cv2.cvtColor(ahe_img, cv2.COLOR_BGR2RGB)
-            th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
-            output = image.copy()
-            # paint rectangle border around all filtered components against original image
-            for r in rect_border:
-                # (x, y), (x + w, y + h)
-                cv2.rectangle(output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
-            char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
+        # OpenCV reads images BGR, matplotlib reads in RGB. Convert all images.
+        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        greyscale_img = cv2.cvtColor(greyscale_img, cv2.COLOR_BGR2RGB)
+        filtered_image = cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB)
+        ahe_img = cv2.cvtColor(ahe_img, cv2.COLOR_BGR2RGB)
+        th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
+        output = image.copy()
 
-            # average image = 580x160 = 5.3 inches x 1.7
-            fig = plt.figure(figsize=(20, 6))
+        # reference: drawing around component border
+        # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
+        for r in rect_border:
+            # (x, y), (x + w, y + h)
+            cv2.rectangle(output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
+        char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
 
-            i = 1
-            for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
-                               [filtered_image, "Bilateral Filtered Image"],
-                               [ahe_img, "Adaptive Histogram Equalisation"],
-                               [th_img, "Automatic Thresholding (Otsu's Method)"],
-                               [output, "Connected Components (Characters)"],
-                               [char_img, "Characters of " + file]]:
-                fig.add_subplot(rows, cols, i)
-                plt.imshow(img)
-                plt.title(title)
-                plt.axis("off")
-                i = i + 1
+        # Reference displaying multiple images in matplotlib subplots:
+        # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
+        # average image = 580x160 = 5.3 inches x 1.7
+        fig = plt.figure(figsize=(20, 6))
 
-            plt.subplots_adjust(hspace=0.5)
-            plt.show()
+        i = 1
+        for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
+                           [filtered_image, "Bilateral Filtered Image"],
+                           [ahe_img, "Adaptive Histogram Equalisation"],
+                           [th_img, "Automatic Thresholding (Otsu's Method)"],
+                           [output, "Connected Components (Characters)"],
+                           [char_img, "Characters of " + file]]:
+            fig.add_subplot(rows, cols, i)
+            plt.imshow(img)
+            plt.title(title)
+            plt.axis("off")
+            i = i + 1
 
-            if count == limit:
-                break
+        plt.subplots_adjust(hspace=0.5)
+        plt.show()
+
+        count = count + 1
+        if count == limit:
+            break
+
+
 
 
 start()
