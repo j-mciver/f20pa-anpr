@@ -94,13 +94,7 @@ def start():
             char_img, rect_border, characters = character_segmentation(th_img)
             # cv2.imshow("Characters", char_img)
 
-            output = image.copy()
-            # paint rectangle border around all filtered components against original image
-            for r in rect_border:
-                # (x, y), (x + w, y + h)
-                cv2.rectangle(output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
 
-            # cv2.imshow("Character Detection (Original Image)", output)
 
             # for char in characters:
             #     cv2.imshow("char", char)
@@ -120,7 +114,7 @@ def start():
             """--- DISPLAY PROCESSED IMAGES --- Reference (Display multiple images in matplotlib): 
             https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/"""
             # IF -v (verbose flag enabled) ... show
-            rows = 2
+            rows = 3
             cols = 3
 
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)  # OpenCV reads images BGR, matplotlib reads in RGB. Convert.
@@ -128,21 +122,30 @@ def start():
             filtered_image = cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB)
             ahe_img = cv2.cvtColor(ahe_img, cv2.COLOR_BGR2RGB)
             th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
+            output = image.copy()
+            # paint rectangle border around all filtered components against original image
+            for r in rect_border:
+                # (x, y), (x + w, y + h)
+                cv2.rectangle(output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
+            char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
 
             # average image = 580x160 = 5.3 inches x 1.7
-            fig = plt.figure(figsize=(30, 6))
+            fig = plt.figure(figsize=(20, 6))
 
             i = 1
             for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
                                [filtered_image, "Bilateral Filtered Image"],
                                [ahe_img, "Adaptive Histogram Equalisation"],
-                               [th_img, "Automatic Thresholding (Otsu's Method)"]]:
+                               [th_img, "Automatic Thresholding (Otsu's Method)"],
+                               [output, "Connected Components (Characters)"],
+                               [char_img, "Characters of " + file]]:
                 fig.add_subplot(rows, cols, i)
                 plt.imshow(img)
                 plt.title(title)
                 plt.axis("off")
                 i = i + 1
 
+            plt.subplots_adjust(wspace=0.2, hspace=0.5)
             plt.show()
 
             if count == limit:
