@@ -84,12 +84,15 @@ def start():
             char_img, rect_border, characters = character_segmentation(th_img)
 
             # bilinear transformation - tilt detection and correction
+            # resize() cv2 / pillow
+            # correct tilt and then cmompare to template matching
             # correcting tilt can be done after, once we have the characters, means theres less to work with?
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
 
         """--- DISPLAY PROCESSED IMAGES --- 
             Contents are only displayed if -v command line arg is provided (verbose flag enabled)
+            else, result metrics are pushed to display
         """
         # IF -v (verbose flag enabled) ... show
         rows = 3
