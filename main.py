@@ -55,9 +55,31 @@ def character_segmentation(th_img):
     return char_img, rect_border, characters
 
 
+def extract_characters(char_img, rect_border):
+    extracted_char_templates = []
+
+    # normalise extracted characters to be suitable for template matching
+    for r in rect_border:
+        # y:y + h, x:x + w (rows, columns)
+        ext_char = char_img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]]
+
+        # remove white pixels
+        # resize to template width and height (30, 60)
+
+        ext_char = cv2.bitwise_not(ext_char)
+        extracted_char_templates.append(ext_char)
+
+    for e in extracted_char_templates:
+        cv2.imshow("extracted char", e)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+    return extracted_char_templates
+
+
 # Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 def start():
-    limit = 12
+    limit = 1
     count = 0
     for file in image_list:
         start_time = time.time()
@@ -81,8 +103,16 @@ def start():
             th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
 
-            # Character Segmentation and Extraction
+            # Character Segmentation
             char_img, rect_border, characters = character_segmentation(th_img)
+
+            # Extract Characters from Original Input Image
+            extract_characters(char_img, rect_border)
+
+            # for char in characters:
+            #     cv2.imshow("char", char)
+            #     cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
             # bilinear transformation - tilt detection and correction
             # resize() cv2 / pillow
@@ -150,3 +180,4 @@ start()
 # https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
 # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
+# https://learnopencv.com/cropping-an-image-using-opencv/#cropping-using-opencv
