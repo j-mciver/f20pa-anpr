@@ -6,6 +6,7 @@ import numpy as np
 
 image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented"
 # image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
+# warn: large file size on github repo?
 image_list = sorted(os.listdir(image_dir))
 
 
@@ -44,7 +45,7 @@ def character_segmentation(th_img):
         print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(i + 1, numLabels, w, h, area))
 
         # filter connected components by width, height and area of pixels
-        if all((5 < w < 50, 45 < h < 65, 420 < area < 1500)):
+        if all((5 < w < 50, 40 < h < 65, 420 < area < 1500)):
             print("Keeping component {}".format(text))
             componentMask = (labels == i).astype("uint8") * 255
             characters.append(componentMask)
@@ -56,7 +57,7 @@ def character_segmentation(th_img):
 
 # Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 def start():
-    limit = 10
+    limit = 12
     count = 0
     for file in image_list:
         start_time = time.time()
