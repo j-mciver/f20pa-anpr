@@ -16,6 +16,8 @@ def apply_bilateral_filter(img):
 
 # reference: bilateral filter algorithm https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 IBF_THRESHOLD = 1.00
+
+
 def iterative_bilateral_filter(img):
     fimg = apply_bilateral_filter(img)
     psnr = cv2.PSNR(img, fimg)
@@ -61,18 +63,22 @@ def extract_characters(char_img, rect_border):
     # normalise extracted characters to be suitable for template matching
     for r in rect_border:
         # y:y + h, x:x + w (rows, columns)
-        ext_char = char_img[r[1]:r[1]+r[3], r[0]:r[0]+r[2]]
+        ext_char = char_img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]]
 
-        # remove white pixels
-        # resize to template width and height (30, 60)
-
+        # remove background from image
         ext_char = cv2.bitwise_not(ext_char)
-        extracted_char_templates.append(ext_char)
+        ext_char = cv2.cvtColor(ext_char,
+                                cv2.COLOR_GRAY2RGBA)  # convert to alpha to remove white pixels (set to transparent)
 
-    for e in extracted_char_templates:
-        cv2.imshow("extracted char", e)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        for arr in ext_char:
+            for row in arr:
+                if np.array_equal(row[:3], [255, 255, 255]):
+                    row[3] = 0  # set alpha value to transparent
+
+        # resize to template width and height (30, 60)
+        ext_char = cv2.resize(ext_char, (30, 60), cv2.INTER_LINEAR)
+
+        extracted_char_templates.append(ext_char)
 
     return extracted_char_templates
 
@@ -107,7 +113,7 @@ def start():
             char_img, rect_border, characters = character_segmentation(th_img)
 
             # Extract Characters from Original Input Image
-            extract_characters(char_img, rect_border)
+            testIMG = extract_characters(char_img, rect_border)[0]
 
             # for char in characters:
             #     cv2.imshow("char", char)
@@ -155,9 +161,9 @@ def start():
                            [ahe_img, "Adaptive Histogram Equalisation"],
                            [th_img, "Automatic Thresholding (Otsu's Method)"],
                            [output, "Connected Components (Characters)"],
-                           [char_img, "Characters of " + file]]:
+                           [char_img, "Characters of " + file],
+                           [testIMG, "extracted template"]]:
             fig.add_subplot(rows, cols, i)
-            plt.imshow(img)
             plt.title(title)
             plt.axis("off")
             i = i + 1
@@ -181,3 +187,4 @@ start()
 # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
 # https://learnopencv.com/cropping-an-image-using-opencv/#cropping-using-opencv
+# resizing an image (opencv) tutorial reference: https://learnopencv.com/image-resizing-with-opencv/
