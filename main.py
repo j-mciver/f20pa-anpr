@@ -8,6 +8,9 @@ image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicence
 # image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
 image_list = sorted(os.listdir(image_dir))
 
+templates_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/templates"
+templates_list = sorted(os.listdir(templates_dir))
+
 
 def apply_bilateral_filter(img):
     return cv2.bilateralFilter(img, 7, 75, 75)
@@ -77,9 +80,48 @@ def extract_characters(char_img, rect_border):
         # resize to template width and height (30, 60)
         ext_char = cv2.resize(ext_char, (30, 60), cv2.INTER_LINEAR)
 
+        ext_char = cv2.cvtColor(ext_char, cv2.COLOR_RGBA2GRAY)
         extracted_char_templates.append(ext_char)
 
     return extracted_char_templates
+
+
+# https://docs.opencv.org/3.4/d4/dc6/tutorial_py_template_matching.html
+def template_match(extracted_char_templates):
+    # All the 6 methods for comparison in a list
+    methods = ['cv.TM_CCOEFF', 'cv.TM_CCOEFF_NORMED', 'cv.TM_CCORR',
+               'cv.TM_CCORR_NORMED', 'cv.TM_SQDIFF', 'cv.TM_SQDIFF_NORMED']
+
+    threshold = 0.8
+    for ext_char in extracted_char_templates:
+        for template in templates_list:
+            template_path = templates_dir + "/" + template
+
+            # convert both images to greyscale for matchTemplate()
+            tmp_img = cv2.imread(template_path)
+            tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_BGR2GRAY)
+
+            # print(template.shape)
+            # print(ext_char.shape)
+            # plt.imshow(template, cmap='gray')
+            # plt.gcf().set_facecolor('lightblue')  # You can use any valid color name or code
+            # plt.show()
+            #
+            # plt.imshow(ext_char, cmap='gray')
+            # plt.gcf().set_facecolor('lightblue')  # You can use any valid color name or code
+            # plt.show()
+            # cv2.imshow("template", template)
+            # cv2.imshow("extracted char", ext_char)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
+
+            res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+            print(max_val)
+            if max_val >= threshold:
+                print("match found! confidence: ", max_val)
+                print(template)
+    return
 
 
 # Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
@@ -112,17 +154,16 @@ def start():
             char_img, rect_border, characters = character_segmentation(th_img)
 
             # Extract Characters from Original Input Image
-            testIMG = extract_characters(char_img, rect_border)[0]
-
-            # for char in characters:
-            #     cv2.imshow("char", char)
-            #     cv2.waitKey(0)
-            # cv2.destroyAllWindows()
+            ext_char_templates = extract_characters(char_img, rect_border)
 
             # bilinear transformation - tilt detection and correction
             # resize() cv2 / pillow
             # correct tilt and then cmompare to template matching
             # correcting tilt can be done after, once we have the characters, means theres less to work with?
+
+            # Template Matching
+            template_match(ext_char_templates)
+            return
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
 
@@ -152,7 +193,7 @@ def start():
         # Reference displaying multiple images in matplotlib subplots:
         # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
         # average image = 580x160 = 5.3 inches x 1.7
-        fig = plt.figure(figsize=(30, 10))
+        fig = plt.figure(figsize=(20, 6))
 
         i = 1
         for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
@@ -160,8 +201,7 @@ def start():
                            [ahe_img, "Adaptive Histogram Equalisation"],
                            [th_img, "Automatic Thresholding (Otsu's Method)"],
                            [output, "Connected Components (Characters)"],
-                           [char_img, "Characters of " + file],
-                           [testIMG, "extracted template"]]:
+                           [char_img, "Characters of " + file]]:
             fig.add_subplot(rows, cols, i)
             plt.imshow(img)
             plt.title(title)
