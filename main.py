@@ -6,7 +6,6 @@ import numpy as np
 
 image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented"
 # image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
-# warn: large file size on github repo?
 image_list = sorted(os.listdir(image_dir))
 
 
@@ -153,7 +152,7 @@ def start():
         # Reference displaying multiple images in matplotlib subplots:
         # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
         # average image = 580x160 = 5.3 inches x 1.7
-        fig = plt.figure(figsize=(20, 6))
+        fig = plt.figure(figsize=(30, 10))
 
         i = 1
         for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
@@ -164,6 +163,7 @@ def start():
                            [char_img, "Characters of " + file],
                            [testIMG, "extracted template"]]:
             fig.add_subplot(rows, cols, i)
+            plt.imshow(img)
             plt.title(title)
             plt.axis("off")
             i = i + 1
