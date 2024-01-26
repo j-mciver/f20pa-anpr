@@ -163,7 +163,6 @@ def start():
 
             # Template Matching
             template_match(ext_char_templates)
-            return
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
 
