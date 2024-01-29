@@ -8,7 +8,8 @@ image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicence
 # image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
 image_list = sorted(os.listdir(image_dir))
 
-templates_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/templates"
+# templates_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/templates"
+templates_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/templates"
 templates_list = sorted(os.listdir(templates_dir))
 
 
@@ -69,18 +70,19 @@ def extract_characters(char_img, rect_border):
 
         # remove background from image
         ext_char = cv2.bitwise_not(ext_char)
-        ext_char = cv2.cvtColor(ext_char,
-                                cv2.COLOR_GRAY2RGBA)  # convert to alpha to remove white pixels (set to transparent)
-
-        for arr in ext_char:
-            for row in arr:
-                if np.array_equal(row[:3], [255, 255, 255]):
-                    row[3] = 0  # set alpha value to transparent
+        # ext_char = cv2.cvtColor(ext_char,
+        #                         cv2.COLOR_GRAY2RGBA)  # convert to alpha to remove white pixels (set to transparent)
+        #
+        # for arr in ext_char:
+        #     for row in arr:
+        #         if np.array_equal(row[:3], [255, 255, 255]):
+        #             row[3] = 0  # set alpha value to transparent
 
         # resize to template width and height (30, 60)
         ext_char = cv2.resize(ext_char, (30, 60), cv2.INTER_LINEAR)
 
-        ext_char = cv2.cvtColor(ext_char, cv2.COLOR_RGBA2GRAY)
+        print("EXT CHAR SiZE HERE", ext_char.shape)
+        # ext_char = cv2.cvtColor(ext_char, cv2.COLOR_RGB2GRAY)
         extracted_char_templates.append(ext_char)
 
     return extracted_char_templates
@@ -92,35 +94,55 @@ def template_match(extracted_char_templates):
     methods = ['cv.TM_CCOEFF', 'cv.TM_CCOEFF_NORMED', 'cv.TM_CCORR',
                'cv.TM_CCORR_NORMED', 'cv.TM_SQDIFF', 'cv.TM_SQDIFF_NORMED']
 
-    threshold = 0.8
+    max_confidence = 0
+    best_guess_char = ""
+    reg = ""
+
+    threshold = 0.0
     for ext_char in extracted_char_templates:
         for template in templates_list:
             template_path = templates_dir + "/" + template
 
             # convert both images to greyscale for matchTemplate()
+            # print(template_path)
             tmp_img = cv2.imread(template_path)
-            tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_BGR2GRAY)
+            tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_BGRA2GRAY)
 
-            # print(template.shape)
+
+            # print(tmp_img.shape)
             # print(ext_char.shape)
-            # plt.imshow(template, cmap='gray')
-            # plt.gcf().set_facecolor('lightblue')  # You can use any valid color name or code
+            # plt.imshow(tmp_img, cmap='gray')
+            # plt.gcf().set_facecolor('lightblue')
             # plt.show()
             #
             # plt.imshow(ext_char, cmap='gray')
-            # plt.gcf().set_facecolor('lightblue')  # You can use any valid color name or code
+            # plt.gcf().set_facecolor('lightblue')
             # plt.show()
-            # cv2.imshow("template", template)
+            # cv2.imshow("template", tmp_img)
             # cv2.imshow("extracted char", ext_char)
             # cv2.waitKey(0)
             # cv2.destroyAllWindows()
 
-            res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF)
+            res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
             print(max_val)
+
+            # todo: implement more intelligent logic against contolling confidence (will have to write assumption)
+            # assumption is 2 character, 2 digits, 3 characters so 3rd and 4th itertaion picks highest correlation from number template set
             if max_val >= threshold:
-                print("match found! confidence: ", max_val)
-                print(template)
+                if max_val > max_confidence:
+                    max_confidence = max_val
+                    best_guess_char = template[0]
+                # print("match found! confidence: ", max_val)
+                # print("CHARACTER:",template[0])
+        print("MAX CONFIDENCE: ", max_confidence, " CHAR = ",best_guess_char)
+        reg += best_guess_char
+        max_confidence = 0
+        best_guess_char = None
+        # print("new max confidence: ", max_confidence, " believe char is: ", best_guess_char)
+    print(reg.upper())
+    reg = ""
+
     return
 
 
