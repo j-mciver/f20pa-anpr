@@ -189,9 +189,7 @@ def start():
                 file = file.replace("I", "1")
             if "O" in file:
                 file = file.replace("O", "0")
-            # test_invalid_char = "AA40BWI"
-            # test_invalid_char.replace("I", "1")
-            # print("TEST WHAHAHA ", test_invalid_char)
+
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
             if reg.upper() == file[:7]:
