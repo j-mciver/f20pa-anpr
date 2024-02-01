@@ -29,6 +29,9 @@ def iterative_bilateral_filter(img):
     print("PSNR: %s" % (psnr))
     return fimg
 
+def tilt_correction(th_img):
+    return
+
 
 def character_segmentation(th_img):
     # Reference: Connected-Component Analysis (https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/)
@@ -38,26 +41,37 @@ def character_segmentation(th_img):
     characters = []
     rect_border = []
 
+    # sort components to appear based x-axis order (sorted on character, left to right)
+    x_axis_sorted_components = list()
     for i in range(1, numLabels):
+        x = stats[i, cv2.CC_STAT_LEFT]
+        x_axis_sorted_components.append([x, i])
+
+    list.sort(x_axis_sorted_components)
+
+    for i, j in x_axis_sorted_components:
         text = "component {}/{}".format(i + 1, numLabels)
 
         # print a status message update for the current connected component
         # print("[INFO] {}".format(text))
 
-        x = stats[i, cv2.CC_STAT_LEFT]
-        y = stats[i, cv2.CC_STAT_TOP]
-        w = stats[i, cv2.CC_STAT_WIDTH]
-        h = stats[i, cv2.CC_STAT_HEIGHT]
-        area = stats[i, cv2.CC_STAT_AREA]
+        x = stats[j, cv2.CC_STAT_LEFT]
+        y = stats[j, cv2.CC_STAT_TOP]
+        w = stats[j, cv2.CC_STAT_WIDTH]
+        h = stats[j, cv2.CC_STAT_HEIGHT]
+        area = stats[j, cv2.CC_STAT_AREA]
         # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(i + 1, numLabels, w, h, area))
 
         # filter connected components by width, height and area of pixels
         if all((5 < w < 50, 40 < h < 65, 360 < area < 1500)):
             # print("Keeping component {}".format(text))
-            component_mask = (labels == i).astype("uint8") * 255
+            component_mask = (labels == j).astype("uint8") * 255
             characters.append(component_mask)
             rect_border.append([x, y, w, h])
             char_img = cv2.bitwise_or(char_img, component_mask)
+            cv2.imshow("test", char_img),
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
     return char_img, rect_border, characters
 
@@ -92,11 +106,13 @@ def template_match(extracted_char_templates):
 
     threshold = 0.0
     for ext_char in extracted_char_templates:
+        # cv2.imshow("ext_char", ext_char)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
         for template in templates_list:
             template_path = templates_dir + "/" + template
 
             # convert both images to greyscale for inputs to matchTemplate()
-            # print(template_path)
             tmp_img = cv2.imread(template_path)
             tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_BGRA2GRAY)
 
@@ -122,9 +138,10 @@ def template_match(extracted_char_templates):
 
 # Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 def start():
+    begin_time = time.time()
     correct = 0
 
-    limit = 5
+    limit = 10
     count = 0
     for file in image_list:
         print(file)
@@ -149,6 +166,9 @@ def start():
             th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
 
+            # Tilt Correction (Perspective Based)
+            tilt_correction(th_img)
+
             # Character Segmentation
             char_img, rect_border, characters = character_segmentation(th_img)
 
@@ -171,7 +191,7 @@ def start():
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
                 else, result metrics are pushed to display
             """
-            plot_results = True
+            plot_results = False
             if plot_results:
                 # IF -v (verbose flag enabled) ... show
                 rows = 3
@@ -209,14 +229,19 @@ def start():
                     plt.title(title)
                     plt.axis("off")
                     i = i + 1
-
+                plt.text(850, 100, reg.upper(), fontsize="40", color="black")
                 plt.subplots_adjust(hspace=0.5)
                 plt.show()
 
             count = count + 1
             if count == limit:
+                end_time = time.time() - begin_time
+                """
+                    --- Analytics / Result Metrics Output: ---
+                """
                 avg_reading_accuracy = (correct / limit) * 100
-                print("Average Reading Accuracy: {}%".format(avg_reading_accuracy))
+                print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {}%\n"
+                      "Total time taken for {} inputs: {:0.2f} seconds".format(avg_reading_accuracy, limit, end_time))
                 break
 
 
@@ -232,3 +257,4 @@ start()
 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
 # https://learnopencv.com/cropping-an-image-using-opencv/#cropping-using-opencv
 # resizing an image (opencv) tutorial reference: https://learnopencv.com/image-resizing-with-opencv/
+# https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html (tilt correction based on perspective)
