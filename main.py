@@ -1,3 +1,5 @@
+from datetime import datetime
+
 import cv2
 import os
 import time
@@ -50,7 +52,9 @@ def character_segmentation(th_img):
         print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(i + 1, numLabels, w, h, area))
 
         # filter connected components by width, height and area of pixels
-        if all((5 < w < 50, 40 < h < 65, 420 < area < 1500)):
+        # LABEL 2/2 stats: w = 58, h = 319, area = 18502
+        # 5 < w < 50, 40 < h < 65, 360 < area < 1500 ORIGINAL
+        if all((5 < w < 50, 40 < h < 65, 360 < area < 1500)):
             print("Keeping component {}".format(text))
             componentMask = (labels == i).astype("uint8") * 255
             characters.append(componentMask)
@@ -108,7 +112,6 @@ def template_match(extracted_char_templates):
             tmp_img = cv2.imread(template_path)
             tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_BGRA2GRAY)
 
-
             # print(tmp_img.shape)
             # print(ext_char.shape)
             # plt.imshow(tmp_img, cmap='gray')
@@ -125,7 +128,7 @@ def template_match(extracted_char_templates):
 
             res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-            print(max_val)
+            # print(max_val)
 
             # todo: implement more intelligent logic against contolling confidence (will have to write assumption)
             # assumption is 2 character, 2 digits, 3 characters so 3rd and 4th itertaion picks highest correlation from number template set
@@ -135,7 +138,7 @@ def template_match(extracted_char_templates):
                     best_guess_char = template[0]
                 # print("match found! confidence: ", max_val)
                 # print("CHARACTER:",template[0])
-        print("MAX CONFIDENCE: ", max_confidence, " CHAR = ",best_guess_char)
+        print("MAX CONFIDENCE: ", max_confidence, " CHAR = ", best_guess_char)
         reg += best_guess_char
         max_confidence = 0
         best_guess_char = None
@@ -148,9 +151,10 @@ def template_match(extracted_char_templates):
 
 # Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 def start():
-    limit = 1
+    limit = 3
     count = 0
     for file in image_list:
+        print(file)
         start_time = time.time()
         if file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".jpg"):
             print("Processing {0}".format(file))
@@ -188,53 +192,55 @@ def start():
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
 
-        """--- DISPLAY PROCESSED IMAGES --- 
-            Contents are only displayed if -v command line arg is provided (verbose flag enabled)
-            else, result metrics are pushed to display
-        """
-        # IF -v (verbose flag enabled) ... show
-        rows = 3
-        cols = 3
+            """--- DISPLAY PROCESSED IMAGES --- 
+                Contents are only displayed if -v command line arg is provided (verbose flag enabled)
+                else, result metrics are pushed to display
+            """
+            plot_results = True
+            if plot_results:
+                # IF -v (verbose flag enabled) ... show
+                rows = 3
+                cols = 3
 
-        # OpenCV reads images BGR, matplotlib reads in RGB. Convert all images.
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        greyscale_img = cv2.cvtColor(greyscale_img, cv2.COLOR_BGR2RGB)
-        filtered_image = cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB)
-        ahe_img = cv2.cvtColor(ahe_img, cv2.COLOR_BGR2RGB)
-        th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
-        output = image.copy()
+                # OpenCV reads images BGR, matplotlib reads in RGB. Convert all images.
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                greyscale_img = cv2.cvtColor(greyscale_img, cv2.COLOR_BGR2RGB)
+                filtered_image = cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB)
+                ahe_img = cv2.cvtColor(ahe_img, cv2.COLOR_BGR2RGB)
+                th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
+                output = image.copy()
 
-        # reference: drawing around component border
-        # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
-        for r in rect_border:
-            # (x, y), (x + w, y + h)
-            cv2.rectangle(output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
-        char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
+                # reference: drawing around component border
+                # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
+                for r in rect_border:
+                    # (x, y), (x + w, y + h)
+                    cv2.rectangle(output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
+                char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
 
-        # Reference displaying multiple images in matplotlib subplots:
-        # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
-        # average image = 580x160 = 5.3 inches x 1.7
-        fig = plt.figure(figsize=(20, 6))
+                # Reference displaying multiple images in matplotlib subplots:
+                # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
+                # average image = 580x160 = 5.3 inches x 1.7
+                fig = plt.figure(figsize=(20, 6))
 
-        i = 1
-        for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
-                           [filtered_image, "Bilateral Filtered Image"],
-                           [ahe_img, "Adaptive Histogram Equalisation"],
-                           [th_img, "Automatic Thresholding (Otsu's Method)"],
-                           [output, "Connected Components (Characters)"],
-                           [char_img, "Characters of " + file]]:
-            fig.add_subplot(rows, cols, i)
-            plt.imshow(img)
-            plt.title(title)
-            plt.axis("off")
-            i = i + 1
+                i = 1
+                for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
+                                   [filtered_image, "Bilateral Filtered Image"],
+                                   [ahe_img, "Adaptive Histogram Equalisation"],
+                                   [th_img, "Automatic Thresholding (Otsu's Method)"],
+                                   [output, "Connected Components (Characters)"],
+                                   [char_img, "Characters of " + file]]:
+                    fig.add_subplot(rows, cols, i)
+                    plt.imshow(img)
+                    plt.title(title)
+                    plt.axis("off")
+                    i = i + 1
 
-        plt.subplots_adjust(hspace=0.5)
-        plt.show()
+                plt.subplots_adjust(hspace=0.5)
+                plt.show()
 
-        count = count + 1
-        if count == limit:
-            break
+            count = count + 1
+            if count == limit:
+                break
 
 
 start()
