@@ -42,20 +42,18 @@ def character_segmentation(th_img):
         text = "component {}/{}".format(i + 1, numLabels)
 
         # print a status message update for the current connected component
-        print("[INFO] {}".format(text))
+        # print("[INFO] {}".format(text))
 
         x = stats[i, cv2.CC_STAT_LEFT]
         y = stats[i, cv2.CC_STAT_TOP]
         w = stats[i, cv2.CC_STAT_WIDTH]
         h = stats[i, cv2.CC_STAT_HEIGHT]
         area = stats[i, cv2.CC_STAT_AREA]
-        print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(i + 1, numLabels, w, h, area))
+        # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(i + 1, numLabels, w, h, area))
 
         # filter connected components by width, height and area of pixels
-        # LABEL 2/2 stats: w = 58, h = 319, area = 18502
-        # 5 < w < 50, 40 < h < 65, 360 < area < 1500 ORIGINAL
         if all((5 < w < 50, 40 < h < 65, 360 < area < 1500)):
-            print("Keeping component {}".format(text))
+            # print("Keeping component {}".format(text))
             componentMask = (labels == i).astype("uint8") * 255
             characters.append(componentMask)
             rect_border.append([x, y, w, h])
@@ -85,7 +83,6 @@ def extract_characters(char_img, rect_border):
         # resize to template width and height (30, 60)
         ext_char = cv2.resize(ext_char, (30, 60), cv2.INTER_LINEAR)
 
-        print("EXT CHAR SiZE HERE", ext_char.shape)
         # ext_char = cv2.cvtColor(ext_char, cv2.COLOR_RGB2GRAY)
         extracted_char_templates.append(ext_char)
 
@@ -95,8 +92,8 @@ def extract_characters(char_img, rect_border):
 # https://docs.opencv.org/3.4/d4/dc6/tutorial_py_template_matching.html
 def template_match(extracted_char_templates):
     # All the 6 methods for comparison in a list
-    methods = ['cv.TM_CCOEFF', 'cv.TM_CCOEFF_NORMED', 'cv.TM_CCORR',
-               'cv.TM_CCORR_NORMED', 'cv.TM_SQDIFF', 'cv.TM_SQDIFF_NORMED']
+    methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
+               'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
 
     max_confidence = 0
     best_guess_char = ""
@@ -122,11 +119,11 @@ def template_match(extracted_char_templates):
             # plt.gcf().set_facecolor('lightblue')
             # plt.show()
             # cv2.imshow("template", tmp_img)
-            # cv2.imshow("extracted char", ext_char)
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
+            cv2.imshow("extracted char", ext_char)
+            cv2.waitKey(0)
+            cv2.destroyAllWindows()
 
-            res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF_NORMED)
+            res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCORR_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
             # print(max_val)
 
@@ -142,7 +139,6 @@ def template_match(extracted_char_templates):
         reg += best_guess_char
         max_confidence = 0
         best_guess_char = None
-        # print("new max confidence: ", max_confidence, " believe char is: ", best_guess_char)
     print(reg.upper())
     reg = ""
 
