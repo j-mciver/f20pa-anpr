@@ -249,7 +249,7 @@ def start():
                 avg_reading_accuracy = (correct / limit) * 100
                 print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {}%\n"
                       "Total time taken for {} inputs: {:0.2f} seconds\n"
-                      "Incorrect Registrations (Predicted, Actual): {}".format(avg_reading_accuracy, limit, end_time, incorrect_reg))
+                      "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit, end_time, len(incorrect_reg), limit, incorrect_reg))
                 break
 
 
