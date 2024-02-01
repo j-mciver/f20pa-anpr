@@ -54,10 +54,10 @@ def character_segmentation(th_img):
         # filter connected components by width, height and area of pixels
         if all((5 < w < 50, 40 < h < 65, 360 < area < 1500)):
             # print("Keeping component {}".format(text))
-            componentMask = (labels == i).astype("uint8") * 255
-            characters.append(componentMask)
+            component_mask = (labels == i).astype("uint8") * 255
+            characters.append(component_mask)
             rect_border.append([x, y, w, h])
-            char_img = cv2.bitwise_or(char_img, componentMask)
+            char_img = cv2.bitwise_or(char_img, component_mask)
 
     return char_img, rect_border, characters
 
@@ -69,16 +69,7 @@ def extract_characters(char_img, rect_border):
     for r in rect_border:
         # y:y + h, x:x + w (rows, columns)
         ext_char = char_img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]]
-
-        # remove background from image
         ext_char = cv2.bitwise_not(ext_char)
-        # ext_char = cv2.cvtColor(ext_char,
-        #                         cv2.COLOR_GRAY2RGBA)  # convert to alpha to remove white pixels (set to transparent)
-        #
-        # for arr in ext_char:
-        #     for row in arr:
-        #         if np.array_equal(row[:3], [255, 255, 255]):
-        #             row[3] = 0  # set alpha value to transparent
 
         # resize to template width and height (30, 60)
         ext_char = cv2.resize(ext_char, (30, 60), cv2.INTER_LINEAR)
@@ -104,28 +95,13 @@ def template_match(extracted_char_templates):
         for template in templates_list:
             template_path = templates_dir + "/" + template
 
-            # convert both images to greyscale for matchTemplate()
+            # convert both images to greyscale for inputs to matchTemplate()
             # print(template_path)
             tmp_img = cv2.imread(template_path)
             tmp_img = cv2.cvtColor(tmp_img, cv2.COLOR_BGRA2GRAY)
 
-            # print(tmp_img.shape)
-            # print(ext_char.shape)
-            # plt.imshow(tmp_img, cmap='gray')
-            # plt.gcf().set_facecolor('lightblue')
-            # plt.show()
-            #
-            # plt.imshow(ext_char, cmap='gray')
-            # plt.gcf().set_facecolor('lightblue')
-            # plt.show()
-            # cv2.imshow("template", tmp_img)
-            cv2.imshow("extracted char", ext_char)
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
-
-            res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCORR_NORMED)
+            res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
-            # print(max_val)
 
             # todo: implement more intelligent logic against contolling confidence (will have to write assumption)
             # assumption is 2 character, 2 digits, 3 characters so 3rd and 4th itertaion picks highest correlation from number template set
@@ -138,16 +114,17 @@ def template_match(extracted_char_templates):
         print("MAX CONFIDENCE: ", max_confidence, " CHAR = ", best_guess_char)
         reg += best_guess_char
         max_confidence = 0
-        best_guess_char = None
-    print(reg.upper())
-    reg = ""
+        best_guess_char = ""
 
-    return
+    print(reg.upper())
+    return reg
 
 
 # Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 def start():
-    limit = 3
+    correct = 0
+
+    limit = 5
     count = 0
     for file in image_list:
         print(file)
@@ -184,9 +161,11 @@ def start():
             # correcting tilt can be done after, once we have the characters, means theres less to work with?
 
             # Template Matching
-            template_match(ext_char_templates)
+            reg = template_match(ext_char_templates)
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
+            if reg.upper() == file[:7]:
+                correct = correct + 1
 
             """--- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
@@ -236,6 +215,8 @@ def start():
 
             count = count + 1
             if count == limit:
+                avg_reading_accuracy = (correct / limit) * 100
+                print("Average Reading Accuracy: {}%".format(avg_reading_accuracy))
                 break
 
 
