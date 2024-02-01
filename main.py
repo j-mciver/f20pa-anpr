@@ -69,9 +69,6 @@ def character_segmentation(th_img):
             characters.append(component_mask)
             rect_border.append([x, y, w, h])
             char_img = cv2.bitwise_or(char_img, component_mask)
-            cv2.imshow("test", char_img),
-            cv2.waitKey(0)
-            cv2.destroyAllWindows()
 
     return char_img, rect_border, characters
 
