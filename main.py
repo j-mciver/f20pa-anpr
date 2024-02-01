@@ -137,8 +137,9 @@ def template_match(extracted_char_templates):
 def start():
     begin_time = time.time()
     correct = 0
+    incorrect_reg = []
 
-    limit = 10
+    limit = 100
     count = 0
     for file in image_list:
         print(file)
@@ -180,9 +181,23 @@ def start():
             # Template Matching
             reg = template_match(ext_char_templates)
 
+
+            # Number Plate Assumption: (A1) The letter 'I'/'i' does not appear in NPs, only 1. (REF Gov Standards)
+            # A2: The letter 'O' and number '0' are equivalent (REF Gov Standard)
+
+            if "I" in file:
+                file = file.replace("I", "1")
+            if "O" in file:
+                file = file.replace("O", "0")
+            # test_invalid_char = "AA40BWI"
+            # test_invalid_char.replace("I", "1")
+            # print("TEST WHAHAHA ", test_invalid_char)
+
             print("%s took %s seconds\n" % (file, time.time() - start_time))
             if reg.upper() == file[:7]:
                 correct = correct + 1
+            else:
+                incorrect_reg.append([reg.upper(), file[:7]])
 
             """--- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
@@ -238,7 +253,8 @@ def start():
                 """
                 avg_reading_accuracy = (correct / limit) * 100
                 print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {}%\n"
-                      "Total time taken for {} inputs: {:0.2f} seconds".format(avg_reading_accuracy, limit, end_time))
+                      "Total time taken for {} inputs: {:0.2f} seconds\n"
+                      "Incorrect Registrations (Predicted, Actual): {}".format(avg_reading_accuracy, limit, end_time, incorrect_reg))
                 break
 
 
