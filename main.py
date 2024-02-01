@@ -1,5 +1,3 @@
-from datetime import datetime
-
 import cv2
 import os
 import time
@@ -164,7 +162,7 @@ def start():
             th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
 
-            # Tilt Correction (Perspective Based)
+            # Tilt Correction (Affine Based)
             tilt_correction(th_img)
 
             # Character Segmentation
@@ -184,7 +182,6 @@ def start():
 
             # Number Plate Assumption: (A1) The letter 'I'/'i' does not appear in NPs, only 1. (REF Gov Standards)
             # A2: The letter 'O' and number '0' are equivalent (REF Gov Standard)
-
             if "I" in file:
                 file = file.replace("I", "1")
             if "O" in file:
@@ -268,4 +265,4 @@ start()
 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
 # https://learnopencv.com/cropping-an-image-using-opencv/#cropping-using-opencv
 # resizing an image (opencv) tutorial reference: https://learnopencv.com/image-resizing-with-opencv/
-# https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html (tilt correction based on perspective)
+# https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html (tilt correction based on affine transformation)
