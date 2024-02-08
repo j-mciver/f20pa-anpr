@@ -98,27 +98,37 @@ def character_segmentation(th_img):
         (numLabels, labels, stats, centroids) = output
         char_img = np.zeros(corrected_img.shape, dtype="uint8")
 
+        # todo: resort on x-axis again?
+        # sort components to appear based x-axis order (sorted on character, left to right)
+        x_axis_sorted_components = list()
         for i in range(1, numLabels):
-            text = "component {}/{}".format(i + 1, numLabels)
+            x = stats[i, cv2.CC_STAT_LEFT]
+            x_axis_sorted_components.append([x, i])
+
+        list.sort(x_axis_sorted_components)
+        print("TEST HELLO", x_axis_sorted_components)
+
+        for i, j in x_axis_sorted_components:
+            text = "component {}/{}".format(j + 1, numLabels)
 
             # print a status message update for the current connected component
-            # print("[INFO] {}".format(text))
+            print("[INFO] {}".format(text))
 
-            x = stats[i, cv2.CC_STAT_LEFT]
-            y = stats[i, cv2.CC_STAT_TOP]
-            w = stats[i, cv2.CC_STAT_WIDTH]
-            h = stats[i, cv2.CC_STAT_HEIGHT]
-            area = stats[i, cv2.CC_STAT_AREA]
-            # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
+            x = stats[j, cv2.CC_STAT_LEFT]
+            y = stats[j, cv2.CC_STAT_TOP]
+            w = stats[j, cv2.CC_STAT_WIDTH]
+            h = stats[j, cv2.CC_STAT_HEIGHT]
+            area = stats[j, cv2.CC_STAT_AREA]
+            print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
 
 
             # filter connected components by width, height and area of pixels
-            if all((5 < w < 50, 40 < h < 65, 290 < area < 910)):
+            if all((5 < w < 50, 40 < h < 65, 290 < area < 1200)):
                 # output = cv2.cvtColor(corrected_img, cv2.COLOR_GRAY2RGB)
                 # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
-                # print("Keeping component {}".format(text))
-                component_mask = (labels == i).astype("uint8") * 255
+                print("Keeping component {}".format(text))
+                component_mask = (labels == j).astype("uint8") * 255
                 characters.append(component_mask)
                 rect_border.append([x, y, w, h])
                 char_img = cv2.bitwise_or(char_img, component_mask)
@@ -205,7 +215,7 @@ def start():
     correct = 0
     incorrect_reg = []
 
-    limit = 10
+    limit = 1000
     count = 0
     for file in image_list:
         print(file)
@@ -263,7 +273,7 @@ def start():
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
                 else, result metrics are pushed to display
             """
-            plot_results = True
+            plot_results = False
             if plot_results:
                 # IF -v (verbose flag enabled) ... show
                 rows = 3
@@ -317,6 +327,7 @@ def start():
                       "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
                                                                                      end_time, len(incorrect_reg),
                                                                                      limit, incorrect_reg))
+                # todo add average processing time for all inputs?
                 break
 
 
