@@ -27,7 +27,29 @@ def iterative_bilateral_filter(img):
     print("PSNR: %s" % (psnr))
     return fimg
 
+
 def tilt_correction(th_img):
+    # 1 = cv2.RETR_EXTERNAL (exclude nested/internal contours)
+    # 2 = cv2.CHAIN_APPROX_SIMPLE we want diagonal lines
+    contours, _ = cv2.findContours(th_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    number_plate = cv2.minAreaRect(contours[7])
+    box = cv2.boxPoints(number_plate)
+    box = np.int0(box)
+    output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
+    cv2.drawContours(output, [box], 0, (0, 0, 255), 2)
+    cv2.imshow("output", output)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    centre = number_plate[0]
+    (x, y) = number_plate[1]
+    angle = number_plate[2]
+    print("TILT CORRECTION HERE: ",number_plate)
+    print(centre)
+    print("x, y: ", (x, y))
+    print("angle of rotation deg: ", angle)
+
+    # (centre, (width, height), rot_angle) = number_plate
     return
 
 
@@ -46,27 +68,45 @@ def character_segmentation(th_img):
         x_axis_sorted_components.append([x, i])
 
     list.sort(x_axis_sorted_components)
+    # know that the left most component will be the number plate itself, take that out of the loop and fix each sorted_component image
+    # sanity check: make sure that area of component is largest area out of every selected component
+    # warpAffine...
 
     for i, j in x_axis_sorted_components:
-        text = "component {}/{}".format(i + 1, numLabels)
+        text = "component {}/{}".format(j + 1, numLabels)
 
         # print a status message update for the current connected component
-        # print("[INFO] {}".format(text))
+        print("[INFO] {}".format(text))
 
         x = stats[j, cv2.CC_STAT_LEFT]
         y = stats[j, cv2.CC_STAT_TOP]
         w = stats[j, cv2.CC_STAT_WIDTH]
         h = stats[j, cv2.CC_STAT_HEIGHT]
         area = stats[j, cv2.CC_STAT_AREA]
-        # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(i + 1, numLabels, w, h, area))
+        print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
+
+        # area > 2500 == number plate rectangle ??
+        # rotated rectangle: https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
+        # if area > 1500:
+            # output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
+            # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
+            # cv2.imshow("number plate", output)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
         # filter connected components by width, height and area of pixels
         if all((5 < w < 50, 40 < h < 65, 360 < area < 1500)):
-            # print("Keeping component {}".format(text))
+            # output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
+            # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
+
+            print("Keeping component {}".format(text))
             component_mask = (labels == j).astype("uint8") * 255
             characters.append(component_mask)
             rect_border.append([x, y, w, h])
             char_img = cv2.bitwise_or(char_img, component_mask)
+
+            # cv2.imshow("Output", output)
+            # cv2.waitKey(0)
 
     return char_img, rect_border, characters
 
@@ -137,7 +177,7 @@ def start():
     correct = 0
     incorrect_reg = []
 
-    limit = 100
+    limit = 1
     count = 0
     for file in image_list:
         print(file)
@@ -162,8 +202,8 @@ def start():
             th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
 
-            # Tilt Correction (Affine Based)
-            tilt_correction(th_img)
+            # Tilt Correction
+            # tilt_correction(th_img)
 
             # Character Segmentation
             char_img, rect_border, characters = character_segmentation(th_img)
@@ -179,26 +219,26 @@ def start():
             # Template Matching
             reg = template_match(ext_char_templates)
 
-
             # Number Plate Assumption: (A1) The letter 'I'/'i' does not appear in NPs, only 1. (REF Gov Standards)
             # A2: The letter 'O' and number '0' are equivalent (REF Gov Standard)
+            # Equivalent Character Assumptions (todo: use domain knowledge for this?)
             if "I" in file:
                 file = file.replace("I", "1")
             if "O" in file:
                 file = file.replace("O", "0")
-
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
             if reg.upper() == file[:7]:
                 correct = correct + 1
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
+                # todo: store incorrect template images (all ext chars and see confidence values)
 
             """--- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
                 else, result metrics are pushed to display
             """
-            plot_results = False
+            plot_results = True
             if plot_results:
                 # IF -v (verbose flag enabled) ... show
                 rows = 3
@@ -221,7 +261,7 @@ def start():
 
                 # Reference displaying multiple images in matplotlib subplots:
                 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
-                # average image = 580x160 = 5.3 inches x 1.7
+                # average image = 580x160 = 5.3 inches x 1.7 inches
                 fig = plt.figure(figsize=(20, 6))
 
                 i = 1
@@ -249,7 +289,9 @@ def start():
                 avg_reading_accuracy = (correct / limit) * 100
                 print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {}%\n"
                       "Total time taken for {} inputs: {:0.2f} seconds\n"
-                      "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit, end_time, len(incorrect_reg), limit, incorrect_reg))
+                      "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
+                                                                                     end_time, len(incorrect_reg),
+                                                                                     limit, incorrect_reg))
                 break
 
 
