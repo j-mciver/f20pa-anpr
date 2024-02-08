@@ -42,7 +42,7 @@ def tilt_correction(th_img, component_mask):
     (x, y) = number_plate[1]
     angle = number_plate[2]
 
-    if angle > 45: # force warpAffine to rotate clockwise
+    if angle > 45:  # force warpAffine to rotate clockwise
         angle += 270
 
     output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
@@ -52,10 +52,10 @@ def tilt_correction(th_img, component_mask):
     (h, w) = output.shape[:2]
     corrected_img = cv2.warpAffine(th_img, matrix, (w, h), flags=cv2.INTER_LINEAR)
 
-    cv2.imshow("corrected tilt", corrected_img)
-    cv2.imshow("output", output)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("corrected tilt", corrected_img)
+    # cv2.imshow("output", output)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     print("TILT CORRECTION HERE:")
     print(centre)
@@ -69,7 +69,6 @@ def character_segmentation(th_img):
     # Reference: Connected-Component Analysis (https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/)
     output = cv2.connectedComponentsWithStats(th_img, 4, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
-    char_img = np.zeros(th_img.shape, dtype="uint8")
     characters = []
     rect_border = []
 
@@ -77,48 +76,59 @@ def character_segmentation(th_img):
     x_axis_sorted_components = list()
     for i in range(1, numLabels):
         x = stats[i, cv2.CC_STAT_LEFT]
-        x_axis_sorted_components.append([x, i])
+        area = stats[i, cv2.CC_STAT_AREA]
+        x_axis_sorted_components.append([x, i, area])
 
     list.sort(x_axis_sorted_components)
 
-    for i, j in x_axis_sorted_components:
-        text = "component {}/{}".format(j + 1, numLabels)
+    # grab number plate from input image based on largest area
+    max = 0
+    idx = None
+    for comp in x_axis_sorted_components:
+        if comp[2] > max:
+            max = comp[2]
+            idx = comp[1]
+            print(comp[2])
 
-        # print a status message update for the current connected component
-        # print("[INFO] {}".format(text))
+    # check area and index
+    if idx is not None and max > 0:
+        component_mask = (labels == idx).astype("uint8") * 255
+        corrected_img = tilt_correction(th_img, component_mask)
+        output = cv2.connectedComponentsWithStats(corrected_img, 4, cv2.CV_32S)
+        (numLabels, labels, stats, centroids) = output
+        char_img = np.zeros(corrected_img.shape, dtype="uint8")
 
-        x = stats[j, cv2.CC_STAT_LEFT]
-        y = stats[j, cv2.CC_STAT_TOP]
-        w = stats[j, cv2.CC_STAT_WIDTH]
-        h = stats[j, cv2.CC_STAT_HEIGHT]
-        area = stats[j, cv2.CC_STAT_AREA]
-        # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
+        for i in range(1, numLabels):
+            text = "component {}/{}".format(i + 1, numLabels)
 
-        if area > 1500:
-            # we have found the number plate, get the contours of it
-            output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
-            # create underlying mask to represent contours as numpy arr
-            component_mask = (labels == j).astype("uint8") * 255
-            tilt_correction(th_img, component_mask)
+            # print a status message update for the current connected component
+            # print("[INFO] {}".format(text))
 
-            # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
-            # cv2.imshow("number plate", output)
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
+            x = stats[i, cv2.CC_STAT_LEFT]
+            y = stats[i, cv2.CC_STAT_TOP]
+            w = stats[i, cv2.CC_STAT_WIDTH]
+            h = stats[i, cv2.CC_STAT_HEIGHT]
+            area = stats[i, cv2.CC_STAT_AREA]
+            # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
 
-        # filter connected components by width, height and area of pixels
-        if all((5 < w < 50, 40 < h < 65, 290 < area < 910)):
-            # output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
-            # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
-            # print("Keeping component {}".format(text))
-            component_mask = (labels == j).astype("uint8") * 255
-            characters.append(component_mask)
-            rect_border.append([x, y, w, h])
-            char_img = cv2.bitwise_or(char_img, component_mask)
+            # filter connected components by width, height and area of pixels
+            if all((5 < w < 50, 40 < h < 65, 290 < area < 910)):
+                # output = cv2.cvtColor(corrected_img, cv2.COLOR_GRAY2RGB)
+                # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
-            # cv2.imshow("Output", output)
-            # cv2.waitKey(0)
+                # print("Keeping component {}".format(text))
+                component_mask = (labels == i).astype("uint8") * 255
+                characters.append(component_mask)
+                rect_border.append([x, y, w, h])
+                char_img = cv2.bitwise_or(char_img, component_mask)
+
+                # cv2.imshow("Output", output)
+                # cv2.waitKey(0)
+
+    else:
+        raise Exception("Error: Plate not found.")
+
 
     # domain knowledge (remove the distinguishing sign - will leafmost by X coordinate)
     # todo: ASSUMPTION - plates are in standard format only that is 2 digits, 2 characters, 3 digits
@@ -253,7 +263,7 @@ def start():
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
                 else, result metrics are pushed to display
             """
-            plot_results = False
+            plot_results = True
             if plot_results:
                 # IF -v (verbose flag enabled) ... show
                 rows = 3
