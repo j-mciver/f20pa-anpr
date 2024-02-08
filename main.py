@@ -36,22 +36,33 @@ def tilt_correction(th_img, component_mask):
     contours, _ = cv2.findContours(component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     number_plate = cv2.minAreaRect(contours[0])
     box = cv2.boxPoints(number_plate)
-    box = np.int0(box)
-    output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
-    cv2.drawContours(output, [box], 0, (0, 0, 255), 2)
-    cv2.imshow("output", output)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    box = np.intp(box)
 
     centre = number_plate[0]
     (x, y) = number_plate[1]
     angle = number_plate[2]
-    print("TILT CORRECTION HERE: ", number_plate)
+
+    if angle > 45: # force warpAffine to rotate clockwise
+        angle += 270
+
+    output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
+    cv2.drawContours(output, [box], 0, (0, 255, 0), 2)
+
+    matrix = cv2.getRotationMatrix2D(centre, angle, 1)
+    (h, w) = output.shape[:2]
+    corrected_img = cv2.warpAffine(th_img, matrix, (w, h), flags=cv2.INTER_LINEAR)
+
+    cv2.imshow("corrected tilt", corrected_img)
+    cv2.imshow("output", output)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    print("TILT CORRECTION HERE:")
     print(centre)
     print("x, y: ", (x, y))
     print("angle of rotation deg: ", angle)
 
-    return
+    return corrected_img
 
 
 def character_segmentation(th_img):
@@ -74,16 +85,14 @@ def character_segmentation(th_img):
         text = "component {}/{}".format(j + 1, numLabels)
 
         # print a status message update for the current connected component
-        print("[INFO] {}".format(text))
+        # print("[INFO] {}".format(text))
 
         x = stats[j, cv2.CC_STAT_LEFT]
         y = stats[j, cv2.CC_STAT_TOP]
         w = stats[j, cv2.CC_STAT_WIDTH]
         h = stats[j, cv2.CC_STAT_HEIGHT]
         area = stats[j, cv2.CC_STAT_AREA]
-        print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
-
-        # area > 2500 == number plate rectangle ??
+        # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
 
         if area > 1500:
             # we have found the number plate, get the contours of it
@@ -102,7 +111,7 @@ def character_segmentation(th_img):
             # output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
             # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
-            print("Keeping component {}".format(text))
+            # print("Keeping component {}".format(text))
             component_mask = (labels == j).astype("uint8") * 255
             characters.append(component_mask)
             rect_border.append([x, y, w, h])
@@ -111,7 +120,7 @@ def character_segmentation(th_img):
             # cv2.imshow("Output", output)
             # cv2.waitKey(0)
 
-    # domain knowledge (remove the distinguishing sign)
+    # domain knowledge (remove the distinguishing sign - will leafmost by X coordinate)
     # todo: ASSUMPTION - plates are in standard format only that is 2 digits, 2 characters, 3 digits
     while len(characters) > 7:
         rect_border.pop(0)
@@ -186,7 +195,7 @@ def start():
     correct = 0
     incorrect_reg = []
 
-    limit = 5
+    limit = 10
     count = 0
     for file in image_list:
         print(file)
@@ -244,7 +253,7 @@ def start():
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
                 else, result metrics are pushed to display
             """
-            plot_results = True
+            plot_results = False
             if plot_results:
                 # IF -v (verbose flag enabled) ... show
                 rows = 3
