@@ -29,6 +29,8 @@ def iterative_bilateral_filter(img):
 
 
 def tilt_correction(th_img, component_mask):
+    # reference: rotated rectangle: https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
+
     # 1 = cv2.RETR_EXTERNAL (exclude nested/internal contours)
     # 2 = cv2.CHAIN_APPROX_SIMPLE we want diagonal lines
     contours, _ = cv2.findContours(component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -44,7 +46,7 @@ def tilt_correction(th_img, component_mask):
     centre = number_plate[0]
     (x, y) = number_plate[1]
     angle = number_plate[2]
-    print("TILT CORRECTION HERE: ",number_plate)
+    print("TILT CORRECTION HERE: ", number_plate)
     print(centre)
     print("x, y: ", (x, y))
     print("angle of rotation deg: ", angle)
@@ -67,9 +69,6 @@ def character_segmentation(th_img):
         x_axis_sorted_components.append([x, i])
 
     list.sort(x_axis_sorted_components)
-    # know that the left most component will be the number plate itself, take that out of the loop and fix each sorted_component image
-    # sanity check: make sure that area of component is largest area out of every selected component
-    # warpAffine...
 
     for i, j in x_axis_sorted_components:
         text = "component {}/{}".format(j + 1, numLabels)
@@ -85,7 +84,7 @@ def character_segmentation(th_img):
         print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
 
         # area > 2500 == number plate rectangle ??
-        # rotated rectangle: https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
+
         if area > 1500:
             # we have found the number plate, get the contours of it
             output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
@@ -93,16 +92,12 @@ def character_segmentation(th_img):
             component_mask = (labels == j).astype("uint8") * 255
             tilt_correction(th_img, component_mask)
 
-
             # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
             # cv2.imshow("number plate", output)
             # cv2.waitKey(0)
             # cv2.destroyAllWindows()
 
         # filter connected components by width, height and area of pixels
-        # todo remove: (OLD) if all((5 < w < 50, 40 < h < 65, 360 < area < 1500)):
-        # todo remove (failure here): LABEL 21/30 stats: w = 9, h = 44, area = 319
-        # todo: LABEL 8/13 stats: w = 25, h = 49, area = 902
         if all((5 < w < 50, 40 < h < 65, 290 < area < 910)):
             # output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
             # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
@@ -118,12 +113,9 @@ def character_segmentation(th_img):
 
     # domain knowledge (remove the distinguishing sign)
     # todo: ASSUMPTION - plates are in standard format only that is 2 digits, 2 characters, 3 digits
-    print("BEFORE DELETE",len(characters))
     while len(characters) > 7:
-        print("HELLO")
         rect_border.pop(0)
         characters.pop(0)
-    print("AFTER DELETE", len(characters))
 
     return char_img, rect_border, characters
 
@@ -171,7 +163,7 @@ def template_match(extracted_char_templates):
             res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-            # todo: implement more intelligent logic against contolling confidence (will have to write assumption)
+            # todo: implement more intelligent logic against controlling confidence (will have to write assumption)
             # assumption is 2 character, 2 digits, 3 characters so 3rd and 4th itertaion picks highest correlation from number template set
             if max_val >= threshold:
                 if max_val > max_confidence:
