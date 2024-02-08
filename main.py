@@ -28,18 +28,18 @@ def iterative_bilateral_filter(img):
     return fimg
 
 
-def tilt_correction(th_img):
+def tilt_correction(th_img, component_mask):
     # 1 = cv2.RETR_EXTERNAL (exclude nested/internal contours)
     # 2 = cv2.CHAIN_APPROX_SIMPLE we want diagonal lines
-    contours, _ = cv2.findContours(th_img, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    number_plate = cv2.minAreaRect(contours[7])
+    contours, _ = cv2.findContours(component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    number_plate = cv2.minAreaRect(contours[0])
     box = cv2.boxPoints(number_plate)
     box = np.int0(box)
     output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
     cv2.drawContours(output, [box], 0, (0, 0, 255), 2)
-    cv2.imshow("output", output)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    # cv2.imshow("output", output)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     centre = number_plate[0]
     (x, y) = number_plate[1]
@@ -87,15 +87,24 @@ def character_segmentation(th_img):
 
         # area > 2500 == number plate rectangle ??
         # rotated rectangle: https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
-        # if area > 1500:
-            # output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
+        if area > 1500:
+            # we have found the number plate, get the contours of it
+            output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
+            # create underlying mask to represent contours as numpy arr
+            component_mask = (labels == j).astype("uint8") * 255
+            tilt_correction(th_img, component_mask)
+
+
             # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
             # cv2.imshow("number plate", output)
             # cv2.waitKey(0)
             # cv2.destroyAllWindows()
 
         # filter connected components by width, height and area of pixels
-        if all((5 < w < 50, 40 < h < 65, 360 < area < 1500)):
+        # todo remove: (OLD) if all((5 < w < 50, 40 < h < 65, 360 < area < 1500)):
+        # todo remove (failure here): LABEL 21/30 stats: w = 9, h = 44, area = 319
+        # todo: LABEL 8/13 stats: w = 25, h = 49, area = 902
+        if all((5 < w < 50, 40 < h < 65, 290 < area < 910)):
             # output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
             # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
@@ -107,6 +116,15 @@ def character_segmentation(th_img):
 
             # cv2.imshow("Output", output)
             # cv2.waitKey(0)
+
+    # domain knowledge (remove the distinguishing sign)
+    # todo: ASSUMPTION - plates are in standard format only that is 2 digits, 2 characters, 3 digits
+    print("BEFORE DELETE",len(characters))
+    while len(characters) > 7:
+        print("HELLO")
+        rect_border.pop(0)
+        characters.pop(0)
+    print("AFTER DELETE", len(characters))
 
     return char_img, rect_border, characters
 
@@ -177,7 +195,7 @@ def start():
     correct = 0
     incorrect_reg = []
 
-    limit = 1
+    limit = 5
     count = 0
     for file in image_list:
         print(file)
@@ -194,18 +212,23 @@ def start():
 
             # adaptative histogram equalisation
             # AHE reference: https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
-            ahe = cv2.createCLAHE(clipLimit=2.2, tileGridSize=(16, 16))
+            ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
             ahe_img = ahe.apply(filtered_image)
 
             # apply otsu's method of automatic thresholding
             # reference: Applying Otsu's method of thresholding. https://docs.opencv.org/3.4/d7/d4d/tutorial_py_thresholding.html
-            th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
+            # th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
+            th_img = cv2.adaptiveThreshold(ahe_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 2)
+
+            # cv2.imshow("threshold image", th_img)
+            # cv2.waitKey(0)
+            # cv2.destroyAllWindows()
 
             # Tilt Correction
             # tilt_correction(th_img)
 
             # Character Segmentation
+            th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
             char_img, rect_border, characters = character_segmentation(th_img)
 
             # Extract Characters from Original Input Image
@@ -287,7 +310,7 @@ def start():
                     --- Analytics / Result Metrics Output: ---
                 """
                 avg_reading_accuracy = (correct / limit) * 100
-                print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {}%\n"
+                print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
                       "Total time taken for {} inputs: {:0.2f} seconds\n"
                       "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
                                                                                      end_time, len(incorrect_reg),
