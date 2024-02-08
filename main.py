@@ -215,8 +215,7 @@ def start():
             ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
             ahe_img = ahe.apply(filtered_image)
 
-            # apply otsu's method of automatic thresholding
-            # reference: Applying Otsu's method of thresholding. https://docs.opencv.org/3.4/d7/d4d/tutorial_py_thresholding.html
+            # refererence: applying adaptative thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
             # th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
             th_img = cv2.adaptiveThreshold(ahe_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 2)
 
@@ -291,7 +290,7 @@ def start():
                 for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
                                    [filtered_image, "Bilateral Filtered Image"],
                                    [ahe_img, "Adaptive Histogram Equalisation"],
-                                   [th_img, "Automatic Thresholding (Otsu's Method)"],
+                                   [th_img, "Adaptive Thresholding"],
                                    [output, "Connected Components (Characters)"],
                                    [char_img, "Characters of " + file]]:
                     fig.add_subplot(rows, cols, i)
@@ -324,7 +323,7 @@ start()
 # https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 # Bilateral Filter: https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 # Peak-Signal to Noise Ratio: (OpenCV) https://shimat.github.io/opencvsharp_docs/html/23f56d6b-49ef-3365-5139-e75712c20fe4.htm
-# Otsu's Method of Thresholding (OpenCV): https://docs.opencv.org/3.4/d7/d4d/tutorial_py_thresholding.html
+# adaptive thresholding: https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
 # https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
 # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
