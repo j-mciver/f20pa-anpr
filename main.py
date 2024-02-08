@@ -37,9 +37,9 @@ def tilt_correction(th_img, component_mask):
     box = np.int0(box)
     output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
     cv2.drawContours(output, [box], 0, (0, 0, 255), 2)
-    # cv2.imshow("output", output)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
+    cv2.imshow("output", output)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
 
     centre = number_plate[0]
     (x, y) = number_plate[1]
@@ -49,7 +49,6 @@ def tilt_correction(th_img, component_mask):
     print("x, y: ", (x, y))
     print("angle of rotation deg: ", angle)
 
-    # (centre, (width, height), rot_angle) = number_plate
     return
 
 
@@ -218,13 +217,6 @@ def start():
             # refererence: applying adaptative thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
             # th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
             th_img = cv2.adaptiveThreshold(ahe_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 2)
-
-            # cv2.imshow("threshold image", th_img)
-            # cv2.waitKey(0)
-            # cv2.destroyAllWindows()
-
-            # Tilt Correction
-            # tilt_correction(th_img)
 
             # Character Segmentation
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
