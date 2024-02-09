@@ -1,3 +1,6 @@
+import argparse
+import sys
+
 import cv2
 import os
 import time
@@ -120,7 +123,6 @@ def character_segmentation(th_img):
             area = stats[j, cv2.CC_STAT_AREA]
             print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
 
-
             # filter connected components by width, height and area of pixels
             if all((5 < w < 50, 40 < h < 65, 290 < area < 1200)):
                 # output = cv2.cvtColor(corrected_img, cv2.COLOR_GRAY2RGB)
@@ -137,7 +139,6 @@ def character_segmentation(th_img):
 
     else:
         raise Exception("Error: Plate not found.")
-
 
     # domain knowledge (remove the distinguishing sign - will leafmost by X coordinate)
     # todo: ASSUMPTION - plates are in standard format only that is 2 digits, 2 characters, 3 digits
@@ -328,10 +329,45 @@ def start():
 
 # reference: argparse usage https://docs.python.org/3/library/argparse.html
 def cl_args_handler():
-    return
+    if len(sys.argv) > 1:
+        parser = argparse.ArgumentParser()
+        parser.add_argument('-d', type=str, help="The directory containing the input image dataset.", required=True)
+        parser.add_argument('-l', type=int, help="The number of files which should be processed from the input image "
+                                                 "dataset. Unspecified limit will default to processing all available "
+                                                 "images from the input directory.", required=False)
+        parser.add_argument('-s', type=str,
+                            help="Specify the pre-processing pipeline stages which should be run against the dataset. "
+                                 "\n1a :- Noise Removal (Adaptive Thresholding, Bilateral Filtering)"
+                                 "\n1b :- Improving Contrast (Adaptive Histogram Equalisation)"
+                                 "\n1c :- Tilt Correction (Bilateral Transformation)", required=False)
+        args = parser.parse_args()
+        image_list = None
+        if os.path.exists(args.d):
+            image_list = sorted(os.listdir(image_dir))
+            print("valid path: ", args.d)
+        else:
+            raise Exception("Error: Invalid directory path provided.")
+
+        if isinstance(args.l, int) and args.l <= len(image_list) and len(image_list) > 0:
+            print("valid amount of limit entered, it is either equal to, or less than the no. items in the directory.")
+        else:
+            raise Exception("Error: Limit out of bounds. Limit entered exceeds the amount of items present in the "
+                            "directory.")
 
 
-start()
+
+        print("HELLO: len ", len(sys.argv))
+        print(args.d)
+        print(args.l)
+        print(args.s)
+        return
+    start()
+    # check that the specified directory exists and is not empty
+    # check that the limit is a true integer and or does not exceed the number of files available in the directory
+
+
+cl_args_handler()
+# start()
 
 # REFERENCES
 # argparse usage https://docs.python.org/3/library/argparse.html
