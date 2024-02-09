@@ -379,8 +379,16 @@ def parse_stage_args(stages):
         raise Exception("Error: Invalid stage, or number of stages, specified.")
 
 
-def call_preprocessing_pipeline(stage):
-    return  # todo
+def call_preprocessing_pipeline(stages):
+    for stage in stages:
+        if stage == "1a":
+            print("1a")
+        elif stage == "1b":
+            print('1b')
+        elif stage == "1c":
+            print("1c")
+        elif stage == "1d":
+            print("1d")
 
 
 # reference: argparse usage https://docs.python.org/3/library/argparse.html
@@ -407,13 +415,25 @@ def cl_args_handler():
         else:
             raise Exception("Error: Invalid directory path provided.")
 
+        limit = None
         if args.l is None:
             limit = len(image_list)
         elif isinstance(args.l, int) and args.l <= len(image_list) and len(image_list) > 0:
-            print("valid amount of limit entered, it is either equal to, or less than the no. items in the directory.")
+            limit = args.l
+            print("Valid Limit :- ", limit)
         else:
             raise Exception("Error: Limit out of bounds. Limit entered exceeds the amount of items present in the "
                             "directory.")
+
+        if args.p is not None:
+            if args.p.lower() == "true":
+                plot_results = True
+            elif args.p.lower() == "false":
+                plot_results = False
+        else:
+            plot_results = False
+
+        print("PLOT RESULTS: ",plot_results)
 
         stages = args.s
         stages = stages.replace(" ", "").strip()
@@ -422,16 +442,9 @@ def cl_args_handler():
         if stages == [] and len(stages) == 0:
             s2 = 2
             #     all stages are toggled off, call start with false enabled on all
-        elif len(stages) == 1:
-            call_preprocessing_pipeline(stages[0])
-            if stages[0] == "1a":
-
-        elif len(stages) == 2:
-            return
-        elif len(stages) == 3:
-            return
+        elif len(stages) > 0:
+            call_preprocessing_pipeline(stages)
         print("STAGES ", stages)
-
         print("HELLO: len ", len(sys.argv))
         print(args.d)
         print(args.l)
@@ -442,8 +455,8 @@ def cl_args_handler():
     # check that the limit is a true integer and or does not exceed the number of files available in the directory
 
 
-# cl_args_handler()
-start()
+cl_args_handler()
+# start()
 
 # REFERENCES
 # argparse usage https://docs.python.org/3/library/argparse.html
