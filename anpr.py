@@ -49,6 +49,8 @@ def iterative_bilateral_filter(img):
     Reference: 
         https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
 """
+
+
 def adaptive_histogram_equalisation(img):
     ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
     return ahe.apply(img)
@@ -237,12 +239,12 @@ def template_match(extracted_char_templates):
     return reg
 
 
-def start():
+def start(s_1a, s_1b, s_1c, s_1d, limit):
     begin_time = time.time()
     correct = 0
     incorrect_reg = []
 
-    limit = 10
+    limit = limit
     count = 0
     for file in image_list:
         print(file)
@@ -261,7 +263,7 @@ def start():
             # AHE reference: https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
             ahe_img = adaptive_histogram_equalisation(filtered_image)
 
-            # refererence: applying adaptative thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
+            # applying adaptative thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
             th_img = adaptive_threshold(ahe_img)
             # th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
 
@@ -289,6 +291,7 @@ def start():
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
                 # todo: store incorrect template images (all ext chars and see confidence values)
+                # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
 
             """--- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
@@ -380,15 +383,20 @@ def parse_stage_args(stages):
 
 
 def call_preprocessing_pipeline(stages):
+    s_1a = False
+    s_1b = False
+    s_1c = False
+    s_1d = False
     for stage in stages:
         if stage == "1a":
-            print("1a")
+            s_1a = True
         elif stage == "1b":
-            print('1b')
+            s_1b = True
         elif stage == "1c":
-            print("1c")
+            s_1c = True
         elif stage == "1d":
-            print("1d")
+            s_1d = True
+    return s_1a, s_1b, s_1c, s_1d
 
 
 # reference: argparse usage https://docs.python.org/3/library/argparse.html
@@ -405,7 +413,9 @@ def cl_args_handler():
                                  "\n1b :- Noise Removal (Bilateral Filtering)"
                                  "\n1c :- Improving Contrast (Adaptive Histogram Equalisation)"
                                  "\n1d :- Tilt Correction (Bilateral Transformation)", required=True)
-        parser.add_argument('-p', type=str, help="Plot the results of each pipeline processing stage to matplotlib and push these results to display. By default this will write the debug pngs to a directory", required=False)
+        parser.add_argument('-p', type=str, help="Plot and display the results of each pipeline processing"
+                                                 " stage. By default this will write result data to a directory",
+                            required=False)
         args = parser.parse_args()
 
         image_list = None
@@ -433,18 +443,20 @@ def cl_args_handler():
         else:
             plot_results = False
 
-        print("PLOT RESULTS: ",plot_results)
+        print("PLOT RESULTS: ", plot_results)
 
         stages = args.s
         stages = stages.replace(" ", "").strip()
         stages = parse_stage_args(stages)
 
         if stages == [] and len(stages) == 0:
-            s2 = 2
-            #     all stages are toggled off, call start with false enabled on all
+            # all stages are toggled off, call start with false enabled on all
+            start(False, False, False, False, limit)
         elif len(stages) > 0:
-            call_preprocessing_pipeline(stages)
-        print("STAGES ", stages)
+            s_1a, s_1b, s_1c, s_1d = call_preprocessing_pipeline(stages)
+            start(s_1a, s_1b, s_1c, s_1d, limit)
+
+        print("\nSTAGES ", stages)
         print("HELLO: len ", len(sys.argv))
         print(args.d)
         print(args.l)
