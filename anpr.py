@@ -327,6 +327,27 @@ def start():
                 break
 
 
+def parse_stage_args(stages):
+    # no pre-processing pipeline stages specified, all are toggled off.
+    if len(stages) == 0 or stages == "" or stages is None:
+        return []
+    elif len(stages) == 2:
+        return [stages]
+    elif len(stages) == 4:
+        s1 = stages[:2]
+        s2 = stages[2:4]
+        return [s1, s2]
+    elif len(stages) == 6:
+        s1 = stages[:2]
+        s2 = stages[2:4]
+        s3 = stages[4:6]
+        return [s1, s2, s3]
+    else:
+        raise Exception("Error: Invalid number of toggled stages specified.")
+
+def call_preprocessing_pipeline(stage):
+    return #todo
+
 # reference: argparse usage https://docs.python.org/3/library/argparse.html
 def cl_args_handler():
     if len(sys.argv) > 1:
@@ -336,10 +357,10 @@ def cl_args_handler():
                                                  "dataset. Unspecified limit will default to processing all available "
                                                  "images from the input directory.", required=False)
         parser.add_argument('-s', type=str,
-                            help="Specify the pre-processing pipeline stages which should be run against the dataset. "
+                            help="Specify the pre-processing pipeline stages which should be run against the dataset."
                                  "\n1a :- Noise Removal (Adaptive Thresholding, Bilateral Filtering)"
                                  "\n1b :- Improving Contrast (Adaptive Histogram Equalisation)"
-                                 "\n1c :- Tilt Correction (Bilateral Transformation)", required=False)
+                                 "\n1c :- Tilt Correction (Bilateral Transformation)", required=True)
         args = parser.parse_args()
         image_list = None
         if os.path.exists(args.d):
@@ -348,13 +369,25 @@ def cl_args_handler():
         else:
             raise Exception("Error: Invalid directory path provided.")
 
-        if isinstance(args.l, int) and args.l <= len(image_list) and len(image_list) > 0:
+        if args.l is None:
+            limit = len(image_list)
+        elif isinstance(args.l, int) and args.l <= len(image_list) and len(image_list) > 0:
             print("valid amount of limit entered, it is either equal to, or less than the no. items in the directory.")
         else:
             raise Exception("Error: Limit out of bounds. Limit entered exceeds the amount of items present in the "
                             "directory.")
 
-
+        stages = args.s
+        stages = stages.replace(" ", "").strip()
+        stages = parse_stage_args(stages)
+        if stages == [] and len(stages) == 0:
+            s2 = 2
+            #     all stages are toggled off, call start with false enabled on all
+        elif len(stages) == 1:
+            call_preprocessing_pipeline(stages[0])
+        elif len(stages) == 2:
+        elif len(stages) == 3:
+        print("STAGES ", stages)
 
         print("HELLO: len ", len(sys.argv))
         print(args.d)
