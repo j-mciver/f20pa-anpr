@@ -14,7 +14,6 @@ image_list = sorted(os.listdir(image_dir))
 templates_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/templates"
 templates_list = sorted(os.listdir(templates_dir))
 
-
 """ Convert an input RGB image to greyscale
     
     Attributes
@@ -24,22 +23,39 @@ templates_list = sorted(os.listdir(templates_dir))
     Reference Usage: OpenCV Converting RGB images to Greyscale
         https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 """
+
+
 def convert_rgb_to_greyscale(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
 
 def apply_bilateral_filter(img):
     return cv2.bilateralFilter(img, 7, 75, 75)
 
 
 # reference: bilateral filter algorithm https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
-IBF_THRESHOLD = 1.00
-
-
 def iterative_bilateral_filter(img):
     fimg = apply_bilateral_filter(img)
     psnr = cv2.PSNR(img, fimg)
     print("PSNR: %s" % (psnr))
     return fimg
+
+
+""" Adaptive Histogram Equalisation
+    - Improves the contrast of input image by locally examining regions of pixels, called neighbours, and distributes
+    illumination/contrast by applying weighted value based on examined pixels. Assess the two peaks (low and
+    high contrast).
+    
+    Reference: 
+        https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
+"""
+def adaptive_histogram_equalisation(img):
+    ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
+    return ahe.apply(img)
+
+
+def adaptive_threshold(img):
+    return cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 2)
 
 
 def tilt_correction(th_img, component_mask):
@@ -243,12 +259,12 @@ def start():
 
             # adaptative histogram equalisation
             # AHE reference: https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
-            ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
-            ahe_img = ahe.apply(filtered_image)
+            ahe_img = adaptive_histogram_equalisation(filtered_image)
 
             # refererence: applying adaptative thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
+            th_img = adaptive_threshold(ahe_img)
             # th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
-            th_img = cv2.adaptiveThreshold(ahe_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 2)
+            # th_img = cv2.adaptiveThreshold(ahe_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 2)
 
             # Character Segmentation
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
@@ -356,8 +372,10 @@ def parse_stage_args(stages):
     else:
         raise Exception("Error: Invalid stage, or number of stages, specified.")
 
+
 def call_preprocessing_pipeline(stage):
-    return #todo
+    return  # todo
+
 
 # reference: argparse usage https://docs.python.org/3/library/argparse.html
 def cl_args_handler():
@@ -391,7 +409,6 @@ def cl_args_handler():
         stages = args.s
         stages = stages.replace(" ", "").strip()
         stages = parse_stage_args(stages)
-
 
         if stages == [] and len(stages) == 0:
             s2 = 2
