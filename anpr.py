@@ -5,10 +5,9 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented"
-# image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
+# todo: image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
 image_list = sorted(os.listdir(image_dir))
 
-# templates_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/templates"
 templates_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/templates"
 templates_list = sorted(os.listdir(templates_dir))
 
