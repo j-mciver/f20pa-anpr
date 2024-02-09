@@ -239,7 +239,7 @@ def template_match(extracted_char_templates):
     return reg
 
 
-def start(s_1a, s_1b, s_1c, s_1d, limit):
+def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
     begin_time = time.time()
     correct = 0
     incorrect_reg = []
@@ -297,7 +297,7 @@ def start(s_1a, s_1b, s_1c, s_1d, limit):
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
                 else, result metrics are pushed to display
             """
-            plot_results = True
+            plot_results = plot_results
             if plot_results:
                 # IF -v (verbose flag enabled) ... show
                 rows = 3
@@ -346,7 +346,15 @@ def start(s_1a, s_1b, s_1c, s_1d, limit):
                     --- Result Metrics Output: ---
                 """
                 avg_reading_accuracy = (correct / limit) * 100
-                print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
+                f = open("anpr_results.txt", "w")
+                f.write("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
+                      "Total time taken for {} inputs: {:0.2f} seconds\n"
+                      "Average time taken to process each input: XX.XX seconds\n"
+                      "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
+                                                                                     end_time, len(incorrect_reg),
+                                                                                     limit, incorrect_reg))
+                f.close()
+                print("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
                       "Total time taken for {} inputs: {:0.2f} seconds\n"
                       "Average time taken to process each input: XX.XX seconds\n"
                       "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
@@ -425,7 +433,6 @@ def cl_args_handler():
         else:
             raise Exception("Error: Invalid directory path provided.")
 
-        limit = None
         if args.l is None:
             limit = len(image_list)
         elif isinstance(args.l, int) and args.l <= len(image_list) and len(image_list) > 0:
@@ -451,13 +458,13 @@ def cl_args_handler():
 
         if stages == [] and len(stages) == 0:
             # all stages are toggled off, call start with false enabled on all
-            start(False, False, False, False, limit)
+            start(False, False, False, False, limit, plot_results)
         elif len(stages) > 0:
             s_1a, s_1b, s_1c, s_1d = call_preprocessing_pipeline(stages)
-            start(s_1a, s_1b, s_1c, s_1d, limit)
+            start(s_1a, s_1b, s_1c, s_1d, limit, plot_results)
 
         print("\nSTAGES ", stages)
-        print("HELLO: len ", len(sys.argv))
+        print("arg len ", len(sys.argv))
         print(args.d)
         print(args.l)
         print(args.s)
