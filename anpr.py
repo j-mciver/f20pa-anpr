@@ -461,10 +461,6 @@ def cl_args_handler():
         print(args.d)
         print(args.l)
         print(args.s)
-        return
-    start()
-    # check that the specified directory exists and is not empty
-    # check that the limit is a true integer and or does not exceed the number of files available in the directory
 
 
 cl_args_handler()
