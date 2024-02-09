@@ -81,7 +81,7 @@ def character_segmentation(th_img):
 
     list.sort(x_axis_sorted_components)
 
-    # grab number plate from input image based on largest area
+    # extract number plate from input image based on largest area
     max = 0
     idx = None
     for comp in x_axis_sorted_components:
@@ -215,7 +215,7 @@ def start():
     correct = 0
     incorrect_reg = []
 
-    limit = 1000
+    limit = 1
     count = 0
     for file in image_list:
         print(file)
@@ -246,11 +246,6 @@ def start():
             # Extract Characters from Original Input Image
             ext_char_templates = extract_characters(char_img, rect_border)
 
-            # bilinear transformation - tilt detection and correction
-            # resize() cv2 / pillow
-            # correct tilt and then cmompare to template matching
-            # correcting tilt can be done after, once we have the characters, means theres less to work with?
-
             # Template Matching
             reg = template_match(ext_char_templates)
 
@@ -273,7 +268,7 @@ def start():
                 Contents are only displayed if -v command line arg is provided (verbose flag enabled)
                 else, result metrics are pushed to display
             """
-            plot_results = False
+            plot_results = True
             if plot_results:
                 # IF -v (verbose flag enabled) ... show
                 rows = 3
@@ -324,6 +319,7 @@ def start():
                 avg_reading_accuracy = (correct / limit) * 100
                 print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
                       "Total time taken for {} inputs: {:0.2f} seconds\n"
+                      "Average time taken to process each input: XX.XX seconds\n"
                       "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
                                                                                      end_time, len(incorrect_reg),
                                                                                      limit, incorrect_reg))
@@ -331,9 +327,15 @@ def start():
                 break
 
 
+# reference: argparse usage https://docs.python.org/3/library/argparse.html
+def cl_args_handler():
+    return
+
+
 start()
 
 # REFERENCES
+# argparse usage https://docs.python.org/3/library/argparse.html
 # https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 # Bilateral Filter: https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 # Peak-Signal to Noise Ratio: (OpenCV) https://shimat.github.io/opencvsharp_docs/html/23f56d6b-49ef-3365-5139-e75712c20fe4.htm
