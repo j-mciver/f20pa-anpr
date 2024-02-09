@@ -242,7 +242,7 @@ def start():
     correct = 0
     incorrect_reg = []
 
-    limit = 1
+    limit = 10
     count = 0
     for file in image_list:
         print(file)
@@ -264,7 +264,6 @@ def start():
             # refererence: applying adaptative thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
             th_img = adaptive_threshold(ahe_img)
             # th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
-            # th_img = cv2.adaptiveThreshold(ahe_img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 2)
 
             # Character Segmentation
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
@@ -369,6 +368,13 @@ def parse_stage_args(stages):
         s2 = stages[2:4]
         s3 = stages[4:6]
         return [s1, s2, s3]
+    elif len(stages) == 8:
+        s1 = stages[:2]
+        s2 = stages[2:4]
+        s3 = stages[4:6]
+        s4 = stages[6:8]
+        return [s1, s2, s3, s4]
+
     else:
         raise Exception("Error: Invalid stage, or number of stages, specified.")
 
@@ -387,10 +393,13 @@ def cl_args_handler():
                                                  "images from the input directory.", required=False)
         parser.add_argument('-s', type=str,
                             help="Specify the pre-processing pipeline stages which should be run against the dataset."
-                                 "\n1a :- Noise Removal (Adaptive Thresholding, Bilateral Filtering)"
-                                 "\n1b :- Improving Contrast (Adaptive Histogram Equalisation)"
-                                 "\n1c :- Tilt Correction (Bilateral Transformation)", required=True)
+                                 "\n1a :- Noise Removal (Adaptive Thresholding)"
+                                 "\n1b :- Noise Removal (Bilateral Filtering)"
+                                 "\n1c :- Improving Contrast (Adaptive Histogram Equalisation)"
+                                 "\n1d :- Tilt Correction (Bilateral Transformation)", required=True)
+        parser.add_argument('-p', type=str, help="Plot the results of each pipeline processing stage to matplotlib and push these results to display. By default this will write the debug pngs to a directory", required=False)
         args = parser.parse_args()
+
         image_list = None
         if os.path.exists(args.d):
             image_list = sorted(os.listdir(image_dir))
@@ -415,6 +424,8 @@ def cl_args_handler():
             #     all stages are toggled off, call start with false enabled on all
         elif len(stages) == 1:
             call_preprocessing_pipeline(stages[0])
+            if stages[0] == "1a":
+
         elif len(stages) == 2:
             return
         elif len(stages) == 3:
