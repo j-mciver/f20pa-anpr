@@ -15,6 +15,18 @@ templates_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/templates"
 templates_list = sorted(os.listdir(templates_dir))
 
 
+""" Convert an input RGB image to greyscale
+    
+    Attributes
+    -----------
+        - img : Input RGB image to be converted to greyscale
+    
+    Reference Usage: OpenCV Converting RGB images to Greyscale
+        https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
+"""
+def convert_rgb_to_greyscale(img):
+    return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+
 def apply_bilateral_filter(img):
     return cv2.bilateralFilter(img, 7, 75, 75)
 
@@ -59,10 +71,10 @@ def tilt_correction(th_img, component_mask):
     # cv2.waitKey(0)
     # cv2.destroyAllWindows()
 
-    print("TILT CORRECTION HERE:")
+    print("TILT CORRECTION:")
     print(centre)
     print("x, y: ", (x, y))
-    print("angle of rotation deg: ", angle)
+    print("angle of rotation (deg): ", angle)
 
     return corrected_img
 
@@ -158,7 +170,7 @@ def extract_characters(char_img, rect_border):
         ext_char = char_img[r[1]:r[1] + r[3], r[0]:r[0] + r[2]]
         ext_char = cv2.bitwise_not(ext_char)
 
-        # resize to template width and height (30, 60)
+        # resize to template to suitable width and height (30, 60)
         ext_char = cv2.resize(ext_char, (30, 60), cv2.INTER_LINEAR)
 
         # ext_char = cv2.cvtColor(ext_char, cv2.COLOR_RGB2GRAY)
@@ -209,7 +221,6 @@ def template_match(extracted_char_templates):
     return reg
 
 
-# Reference: OpenCV Converting RGB images to Greyscale: https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 def start():
     begin_time = time.time()
     correct = 0
@@ -225,7 +236,7 @@ def start():
 
             image_path = image_dir + "/" + file
             image = cv2.imread(image_path)
-            greyscale_img = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            greyscale_img = convert_rgb_to_greyscale(image)
 
             # apply iterative bilateral filter
             filtered_image = iterative_bilateral_filter(greyscale_img)
@@ -314,7 +325,7 @@ def start():
             if count == limit:
                 end_time = time.time() - begin_time
                 """
-                    --- Analytics / Result Metrics Output: ---
+                    --- Result Metrics Output: ---
                 """
                 avg_reading_accuracy = (correct / limit) * 100
                 print("--- Analytics / Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
@@ -343,7 +354,7 @@ def parse_stage_args(stages):
         s3 = stages[4:6]
         return [s1, s2, s3]
     else:
-        raise Exception("Error: Invalid number of toggled stages specified.")
+        raise Exception("Error: Invalid stage, or number of stages, specified.")
 
 def call_preprocessing_pipeline(stage):
     return #todo
@@ -380,13 +391,17 @@ def cl_args_handler():
         stages = args.s
         stages = stages.replace(" ", "").strip()
         stages = parse_stage_args(stages)
+
+
         if stages == [] and len(stages) == 0:
             s2 = 2
             #     all stages are toggled off, call start with false enabled on all
         elif len(stages) == 1:
             call_preprocessing_pipeline(stages[0])
         elif len(stages) == 2:
+            return
         elif len(stages) == 3:
+            return
         print("STAGES ", stages)
 
         print("HELLO: len ", len(sys.argv))
@@ -399,8 +414,8 @@ def cl_args_handler():
     # check that the limit is a true integer and or does not exceed the number of files available in the directory
 
 
-cl_args_handler()
-# start()
+# cl_args_handler()
+start()
 
 # REFERENCES
 # argparse usage https://docs.python.org/3/library/argparse.html
