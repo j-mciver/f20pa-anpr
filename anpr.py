@@ -97,7 +97,7 @@ def tilt_correction(th_img, component_mask):
     return corrected_img
 
 
-def character_segmentation(th_img):
+def character_segmentation(th_img, s_1d):
     # Reference: Connected-Component Analysis (https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/)
     output = cv2.connectedComponentsWithStats(th_img, 4, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
@@ -125,12 +125,14 @@ def character_segmentation(th_img):
     # check area and index
     if idx is not None and max > 0:
         component_mask = (labels == idx).astype("uint8") * 255
-        corrected_img = tilt_correction(th_img, component_mask)
+        if s_1d:
+            corrected_img = tilt_correction(th_img, component_mask)
+        else:
+            corrected_img = th_img
         output = cv2.connectedComponentsWithStats(corrected_img, 4, cv2.CV_32S)
         (numLabels, labels, stats, centroids) = output
         char_img = np.zeros(corrected_img.shape, dtype="uint8")
 
-        # todo: resort on x-axis again?
         # sort components to appear based x-axis order (sorted on character, left to right)
         x_axis_sorted_components = list()
         for i in range(1, numLabels):
@@ -171,7 +173,8 @@ def character_segmentation(th_img):
         raise Exception("Error: Plate not found.")
 
     # domain knowledge (remove the distinguishing sign - will leafmost by X coordinate)
-    # todo: ASSUMPTION - plates are in standard format only that is 2 digits, 2 characters, 3 digits
+    # todo: ASSUMPTION - plates are in standard format that consists of 7 characters/digits only. dateless/private NPs
+    # not included within project scope
     while len(characters) > 7:
         rect_border.pop(0)
         characters.pop(0)
@@ -239,7 +242,18 @@ def template_match(extracted_char_templates):
     return reg
 
 
+""" start() method - accepts input image directory and runs ANPR pipeline stages, returning predicted match against input
+
+    Toggleable Pre-processing Pipeline Stages:
+    
+    1a :- Noise Removal (Bilateral Filtering)
+    1b :- Improving Contrast (Adaptive Histogram Equalisation)
+    1c :- Noise Removal (Adaptive Thresholding) (on) | Default: Otsu's Thresholding (off)
+    1d :- Tilt Correction (Bilateral Transformation)"""
+
+
 def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
+    print("start() method pipeline stages enabled: ", s_1a, s_1b, s_1c, s_1d)
     begin_time = time.time()
     correct = 0
     incorrect_reg = []
@@ -257,22 +271,34 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
             greyscale_img = convert_rgb_to_greyscale(image)
 
             # apply iterative bilateral filter
-            filtered_image = iterative_bilateral_filter(greyscale_img)
+            if s_1a:
+                filtered_image = iterative_bilateral_filter(greyscale_img)
+            else:
+                filtered_image = greyscale_img
 
             # adaptative histogram equalisation
             # AHE reference: https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
-            ahe_img = adaptive_histogram_equalisation(filtered_image)
+            if s_1b:
+                ahe_img = adaptive_histogram_equalisation(filtered_image)
+            else:
+                ahe_img = filtered_image
 
             # applying adaptative thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
-            th_img = adaptive_threshold(ahe_img)
-            # th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_OTSU + cv2.THRESH_BINARY)
+            if s_1c:
+                th_img = adaptive_threshold(ahe_img)
+            else:
+                th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
             # Character Segmentation
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
-            char_img, rect_border, characters = character_segmentation(th_img)
+            char_img, rect_border, characters = character_segmentation(th_img, s_1d)
 
             # Extract Characters from Original Input Image
             ext_char_templates = extract_characters(char_img, rect_border)
+            for e in ext_char_templates:
+                cv2.imshow('test', e)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
 
             # Template Matching
             reg = template_match(ext_char_templates)
@@ -349,17 +375,19 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
                 avg_reading_accuracy = (correct / limit) * 100
                 f = open("anpr_results.txt", "w")
                 f.write("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
-                      "Total time taken for {} inputs: {:0.2f} seconds\n"
-                      "Average time taken to process each input: {:0.2f} seconds\n"
-                      "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
-                                                                                     end_time, avg_processing_time, len(incorrect_reg),
-                                                                                     limit, incorrect_reg))
+                        "Total time taken for {} inputs: {:0.2f} seconds\n"
+                        "Average time taken to process each input: {:0.2f} seconds\n"
+                        "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
+                                                                                       end_time, avg_processing_time,
+                                                                                       len(incorrect_reg),
+                                                                                       limit, incorrect_reg))
                 f.close()
                 print("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
                       "Total time taken for {} inputs: {:0.2f} seconds\n"
                       "Average time taken to process each input: {:0.2f} seconds\n"
                       "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
-                                                                                     end_time, avg_processing_time, len(incorrect_reg),
+                                                                                     end_time, avg_processing_time,
+                                                                                     len(incorrect_reg),
                                                                                      limit, incorrect_reg))
                 # todo add average processing time for all inputs?
                 break
@@ -421,8 +449,8 @@ def cl_args_handler():
         parser.add_argument('-s', type=str,
                             help="Specify the pre-processing pipeline stages which should be run against the dataset."
                                  "\n1a :- Noise Removal (Bilateral Filtering)"
-                                 "\n1b :- Noise Removal (Adaptive Thresholding)"
-                                 "\n1c :- Improving Contrast (Adaptive Histogram Equalisation)"
+                                 "\n1b :- Improving Contrast (Adaptive Histogram Equalisation)"
+                                 "\n1c :- Noise Removal (Adaptive Thresholding) (on) | Default: Otsu's Thresholding"
                                  "\n1d :- Tilt Correction (Bilateral Transformation)", required=True)
         parser.add_argument('-p', type=str, help="Plot and display the results of each pipeline processing"
                                                  " stage. By default this will write result data to a directory",
@@ -440,7 +468,7 @@ def cl_args_handler():
             limit = len(image_list)
         elif isinstance(args.l, int) and args.l <= len(image_list) and len(image_list) > 0:
             limit = args.l
-            print("Valid Limit :- ", limit)
+            print("valid limit :- ", limit)
         else:
             raise Exception("Error: Limit out of bounds. Limit entered exceeds the amount of items present in the "
                             "directory.")
