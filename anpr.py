@@ -366,6 +366,8 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
 
 
 def parse_stage_args(stages):
+    stages = stages.replace(" ", "").strip()
+
     # no pre-processing pipeline stages specified, all are toggled off.
     if len(stages) == 0 or stages == "" or stages is None:
         return []
@@ -418,8 +420,8 @@ def cl_args_handler():
                                                  "images from the input directory.", required=False)
         parser.add_argument('-s', type=str,
                             help="Specify the pre-processing pipeline stages which should be run against the dataset."
-                                 "\n1a :- Noise Removal (Adaptive Thresholding)"
-                                 "\n1b :- Noise Removal (Bilateral Filtering)"
+                                 "\n1a :- Noise Removal (Bilateral Filtering)"
+                                 "\n1b :- Noise Removal (Adaptive Thresholding)"
                                  "\n1c :- Improving Contrast (Adaptive Histogram Equalisation)"
                                  "\n1d :- Tilt Correction (Bilateral Transformation)", required=True)
         parser.add_argument('-p', type=str, help="Plot and display the results of each pipeline processing"
@@ -453,9 +455,7 @@ def cl_args_handler():
 
         print("PLOT RESULTS: ", plot_results)
 
-        stages = args.s
-        stages = stages.replace(" ", "").strip()
-        stages = parse_stage_args(stages)
+        stages = parse_stage_args(args.s)
 
         if stages == [] and len(stages) == 0:
             # all stages are toggled off, call start with false enabled on all
