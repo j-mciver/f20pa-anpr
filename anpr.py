@@ -38,6 +38,7 @@ def apply_bilateral_filter(img):
 def iterative_bilateral_filter(img):
     fimg = apply_bilateral_filter(img)
     psnr = cv2.PSNR(img, fimg)
+    stack.append({"PSNR": psnr})
     print("PSNR: %s" % (psnr))
     return fimg
 
@@ -358,10 +359,10 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                    [char_img, "Characters of " + file]]:
                     fig.add_subplot(rows, cols, i)
                     plt.imshow(img)
-                    plt.title(title)
+                    plt.title(title, {'fontname': 'Arial'})
                     plt.axis("off")
                     i = i + 1
-                plt.text(850, 100, reg.upper(), fontsize="40", color="black")
+                plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
                 plt.subplots_adjust(hspace=0.5)
                 plt.show()
 
