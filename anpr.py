@@ -78,9 +78,6 @@ def tilt_correction(th_img, component_mask):
     output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
     cv2.drawContours(output, [box], 0, (0, 255, 0), 2)
     data_dict["uncorrected_tilt"] = output
-    # cv2.imshow("identified tilt / np", output)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
 
     if angle > 45:  # force warpAffine to rotate clockwise
         matrix = cv2.getRotationMatrix2D(centre, angle + 270, 1)
@@ -93,10 +90,10 @@ def tilt_correction(th_img, component_mask):
     corrected_img = cv2.warpAffine(th_img, matrix, (w, h), flags=cv2.INTER_LINEAR)
     data_dict["corrected_img"] = corrected_img
 
-    print("TILT CORRECTION:")
-    print(centre)
-    print("x, y: ", (x, y))
-    print("angle of rotation (deg): ", angle)
+    # print("TILT CORRECTION:")
+    # print(centre)
+    # print("x, y: ", (x, y))
+    # print("angle of rotation (deg): ", angle)
 
     return corrected_img
 
@@ -124,7 +121,6 @@ def character_segmentation(th_img, s_1d):
         if comp[2] > max:
             max = comp[2]
             idx = comp[1]
-            print(comp[2])
 
     # check area and index
     if idx is not None and max > 0:
@@ -144,27 +140,26 @@ def character_segmentation(th_img, s_1d):
             x_axis_sorted_components.append([x, i])
 
         list.sort(x_axis_sorted_components)
-        print("TEST HELLO", x_axis_sorted_components)
 
         for i, j in x_axis_sorted_components:
             text = "component {}/{}".format(j + 1, numLabels)
 
             # print a status message update for the current connected component
-            print("[INFO] {}".format(text))
+            # print("[INFO] {}".format(text))
 
             x = stats[j, cv2.CC_STAT_LEFT]
             y = stats[j, cv2.CC_STAT_TOP]
             w = stats[j, cv2.CC_STAT_WIDTH]
             h = stats[j, cv2.CC_STAT_HEIGHT]
             area = stats[j, cv2.CC_STAT_AREA]
-            print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
+            # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
 
             # filter connected components by width, height and area of pixels
             if all((5 < w < 50, 40 < h < 65, 290 < area < 1200)):
                 # output = cv2.cvtColor(corrected_img, cv2.COLOR_GRAY2RGB)
                 # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
 
-                print("Keeping component {}".format(text))
+                # print("Keeping component {}".format(text))
                 component_mask = (labels == j).astype("uint8") * 255
                 characters.append(component_mask)
                 rect_border.append([x, y, w, h])
@@ -403,19 +398,19 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                   "Average time taken to process each input: {:0.2f} seconds\n"
                                   "- Average Reading Accuracy: {:0.2f}%\n"
                                   "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
-                                  "Average PSNR Greyscaling -> Bilateral Filtering :- {:0.4f}: \n"
-                                  "Average PSNR Bilateral Filtering -> Adaptive Histogram Equalisation :- {:0.4f}: \n"
-                                  "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding :- {:0.4f}: \n".format(limit,
-                                                                                               end_time,
-                                                                                               avg_processing_time,
-                                                                                               avg_reading_accuracy,
-                                                                                               len(incorrect_reg) / limit,
-                                                                                               len(incorrect_reg),
-                                                                                               limit,
-                                                                                               incorrect_reg,
-                                                                                               avg_psnr_grey_vs_bilateral,
-                                                                                               avg_psnr_bilateral_vs_ahe,
-                                                                                               avg_psnr_ahe_vs_thresholding))
+                                  "Average PSNR Greyscaling -> Bilateral Filtering :- {:0.4f}\n"
+                                  "Average PSNR Bilateral Filtering -> Adaptive Histogram Equalisation :- {:0.4f}\n"
+                                  "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding :- {:0.4f}\n".format(limit,
+                                                                                       end_time,
+                                                                                       avg_processing_time,
+                                                                                       avg_reading_accuracy,
+                                                                                       len(incorrect_reg) / limit,
+                                                                                       len(incorrect_reg),
+                                                                                       limit,
+                                                                                       incorrect_reg,
+                                                                                       avg_psnr_grey_vs_bilateral,
+                                                                                       avg_psnr_bilateral_vs_ahe,
+                                                                                       avg_psnr_ahe_vs_thresholding))
                 f = open("anpr_results.txt", "w")
                 f.write(results_output)
                 f.close()
