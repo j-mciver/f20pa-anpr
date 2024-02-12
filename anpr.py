@@ -313,7 +313,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 file = file.replace("O", "0")
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
-            print(confidence)
             if reg.upper() == file[:7]:
                 correct = correct + 1
             else:
@@ -375,14 +374,17 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
                 # output stage data
                 # NP registration prediction / match:
-                match_strength = []
+                match_strength = ""
                 for con in confidence:
-                    match_strength.append(float(str(con)[:5]))
+                    # match_strength.append((str(con)[:5]))
+                    match_strength = match_strength + str(con)[:5] + "   "
                 print(match_strength)
-                plt.text(850, 100, reg.upper().replace("", " "), fontsize="40", fontname='Arial', color="black")
+                plt.text(850, 100, reg.upper().replace("", "  "), fontsize="40", fontname='Arial', color="black")
+                plt.text(900, 150, match_strength, fontsize="15", fontname='Arial', color="black")
 
 
-
+                # todo: if correct then make graph green for each char correct, or make it slightly red for ones that are wrong
+                # todo: get all analytics metrics and write to csv file. run all 24000 images once metrics are tracked
 
                 plt.subplots_adjust(hspace=1.1)
                 plt.show()
