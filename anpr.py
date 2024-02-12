@@ -335,7 +335,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
                 output = image.copy()
 
-                angle_str = "{:0.2f}° deg of tilt".format(stack.pop())
+                angle_str = "{:0.2f}° tilt".format(stack.pop())
                 # print("{:0.2f}° deg of tilt".format(angle))
 
                 # reference: drawing around component border
@@ -348,32 +348,31 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 # Reference displaying multiple images in matplotlib subplots:
                 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
                 # average image = 580x160 = 5.3 inches x 1.7 inches
-                fig = plt.figure(figsize=(20, 10))
-                fig.add_subplot(3, 3, 2)
-                plt.imshow(image)
-                plt.title("Input Image " + file)
-                plt.axis("off")
+                fig = plt.figure(figsize=(16, 8))
+                display_results(fig, 3, 3, 2, [[image, "Input Image " + file]])
 
-                # [image, "Input Image " + file],
-                i = 5
-                for img, title in [[greyscale_img, "Greyscaled Input RGB Image"],
-                                   [filtered_image, "Bilateral Filtered Image"],
-                                   [ahe_img, "Adaptive Histogram Equalisation"],
-                                   [th_img, "Adaptive Gaussian Thresholding"],
-                                   [output, "Connected Components (Characters)"],
-                                   [char_img, "Characters of " + file]]:
-                    fig.add_subplot(rows, cols, i)
-                    plt.imshow(img)
-                    plt.title(title, {'fontname': 'Arial'})
-                    plt.axis("off")
-                    i = i + 1
-                plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
+                # noise removal stage data
+                noise_removal_data = [[greyscale_img, "Greyscaled Input RGB Image"],
+                                      [filtered_image, "Bilateral Filtered Image"],
+                                      [ahe_img, "Adaptive Histogram Equalisation"],
+                                      [th_img, "Adaptive Gaussian Thresholding"]]
+
+                display_results(fig, rows, cols, 5, noise_removal_data)
+
+                # tilt correction data
+                display_results(fig, 1, 2, 9, [[]])
+
+                # output stage data
+                display_results(fig, rows, cols, 9, [[output, "Connected Components (Characters)"], [char_img, "Characters of " + file]])
+
+                # NP registration prediction / match:
+                # plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
 
                 # place a text box in upper left in axes coords
                 props = dict(boxstyle='round', facecolor='wheat')
-                plt.text(1, 1, angle_str, fontsize=14,verticalalignment='top', bbox=props)
+                plt.text(1, 1, angle_str, fontsize=14, verticalalignment='top', bbox=props)
 
-                plt.subplots_adjust(hspace=0.4)
+                plt.subplots_adjust(hspace=1.5)
                 plt.show()
 
             count = count + 1
@@ -384,21 +383,32 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     --- Result Metrics Output: ---
                 """
                 avg_reading_accuracy = (correct / limit) * 100
-                results_output = ("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"\
-                                 "Total time taken for {} inputs: {:0.2f} seconds\n"\
-                                 "Average time taken to process each input: {:0.2f} seconds\n"\
-                                 "Incorrect Registrations {}/{} (Predicted, Actual): {}\n"\
-                                 "Peak Signal to Noise-Ratio (PSNR) avg. : \n"
-                                  "Mean Squared Error (MSE) avg. : (lower is better)\n".format(avg_reading_accuracy, limit,
-                                                                                     end_time, avg_processing_time,
-                                                                                     len(incorrect_reg),
-                                                                                     limit, incorrect_reg))
+                results_output = ("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n" \
+                                  "Total time taken for {} inputs: {:0.2f} seconds\n" \
+                                  "Average time taken to process each input: {:0.2f} seconds\n" \
+                                  "Incorrect Registrations {}/{} (Predicted, Actual): {}\n" \
+                                  "Peak Signal to Noise-Ratio (PSNR) avg. : \n"
+                                  "Mean Squared Error (MSE) avg. : (lower is better)\n".format(avg_reading_accuracy,
+                                                                                               limit,
+                                                                                               end_time,
+                                                                                               avg_processing_time,
+                                                                                               len(incorrect_reg),
+                                                                                               limit, incorrect_reg))
                 f = open("anpr_results.txt", "w")
                 f.write(results_output)
                 f.close()
                 print(results_output)
                 break
 
+
+def display_results(fig, rows, cols, index, data):
+    i = index
+    for img, title in data:
+        fig.add_subplot(rows, cols, i)
+        plt.imshow(img)
+        plt.title(title, {'fontname': 'Arial'})
+        plt.axis("off")
+        i = i + 1
 
 def parse_stage_args(stages):
     stages = stages.replace(" ", "").strip()
