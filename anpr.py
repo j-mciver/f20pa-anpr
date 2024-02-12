@@ -74,20 +74,20 @@ def tilt_correction(th_img, component_mask):
     (x, y) = number_plate[1]
     angle = number_plate[2]
 
-    if angle > 45:  # force warpAffine to rotate clockwise
-        angle += 270
-
     output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
     cv2.drawContours(output, [box], 0, (0, 255, 0), 2)
 
-    matrix = cv2.getRotationMatrix2D(centre, angle, 1)
+    print("ANGLE BEFORE normalising", angle)
+    if angle > 45:  # force warpAffine to rotate clockwise
+        matrix = cv2.getRotationMatrix2D(centre, angle + 270, 1)
+        angle = 360 - (angle + 270)
+    else:
+        matrix = cv2.getRotationMatrix2D(centre, angle, 1)
+    stack.append(angle)
+
+    print("ANGLE AFTER ", angle)
     (h, w) = output.shape[:2]
     corrected_img = cv2.warpAffine(th_img, matrix, (w, h), flags=cv2.INTER_LINEAR)
-
-    # cv2.imshow("corrected tilt", corrected_img)
-    # cv2.imshow("output", output)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
 
     print("TILT CORRECTION:")
     print(centre)
@@ -248,7 +248,7 @@ def template_match(extracted_char_templates):
     
     1a :- Noise Removal (Bilateral Filtering)
     1b :- Improving Contrast (Adaptive Histogram Equalisation)
-    1c :- Noise Removal (Adaptive Thresholding) (on) | Default: Otsu's Thresholding (off)
+    1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding (off)
     1d :- Tilt Correction (Bilateral Transformation)"""
 
 
@@ -257,6 +257,8 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
     begin_time = time.time()
     correct = 0
     incorrect_reg = []
+    global stack
+    stack = []
 
     limit = limit
     count = 0
@@ -295,10 +297,6 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
 
             # Extract Characters from Original Input Image
             ext_char_templates = extract_characters(char_img, rect_border)
-            for e in ext_char_templates:
-                cv2.imshow('test', e)
-                cv2.waitKey(0)
-                cv2.destroyAllWindows()
 
             # Template Matching
             reg = template_match(ext_char_templates)
@@ -337,6 +335,9 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
                 th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
                 output = image.copy()
 
+                angle = stack.pop()
+                print("{:0.2f} deg of tilt".format(angle))
+
                 # reference: drawing around component border
                 # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
                 for r in rect_border:
@@ -353,7 +354,7 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
                 for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
                                    [filtered_image, "Bilateral Filtered Image"],
                                    [ahe_img, "Adaptive Histogram Equalisation"],
-                                   [th_img, "Adaptive Thresholding"],
+                                   [th_img, "Adaptive Gaussian Thresholding"],
                                    [output, "Connected Components (Characters)"],
                                    [char_img, "Characters of " + file]]:
                     fig.add_subplot(rows, cols, i)
@@ -494,9 +495,6 @@ def cl_args_handler():
 
         print("\nSTAGES ", stages)
         print("arg len ", len(sys.argv))
-        print(args.d)
-        print(args.l)
-        print(args.s)
 
 
 cl_args_handler()
