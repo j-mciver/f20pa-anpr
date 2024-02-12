@@ -372,14 +372,15 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
                 display_results(fig, rows, cols, 14, [[cca_output, "Connected Component Analysis (CCA)"]])
 
-                # for e in ext_char_templates:
-                #     cv2.imshow("test", e)
-                #     cv2.waitKey(0)
-                #     cv2.destroyAllWindows()
 
                 # output stage data
                 # NP registration prediction / match:
-                # plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
+                match_strength = []
+                for con in confidence:
+                    match_strength.append(float(str(con)[:5]))
+                print(match_strength)
+                plt.text(850, 100, reg.upper().replace("", " "), fontsize="40", fontname='Arial', color="black")
+
 
 
 
