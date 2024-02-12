@@ -384,6 +384,19 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
             count = count + 1
             if count == limit:
+                # Results Metric - Most Commonly Incorrect Characters
+                commonly_incorrect_chars = {}
+                # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
+                for reg in incorrect_reg:
+                    for i in range(7):
+                        # predicted does not equal actual character
+                        if reg[0][i] != reg[1][i]:
+                            # update count if key exists
+                            if reg[1][i] in commonly_incorrect_chars:
+                                commonly_incorrect_chars[reg[1][i]] += 1
+                            else:
+                                commonly_incorrect_chars[reg[1][i]] = 1
+
                 end_time = time.time() - begin_time
                 avg_processing_time = end_time / limit
                 avg_psnr_grey_vs_bilateral = sum(psnr[0] for psnr in psnr_readings) / limit
@@ -396,11 +409,12 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 results_output = ("+----------------+\n| Results Output|\n+----------------+\n"
                                   "Total time taken for {} inputs: {:0.2f} seconds\n"
                                   "Average time taken to process each input: {:0.2f} seconds\n"
-                                  "- Average Reading Accuracy: {:0.2f}%\n"
+                                  "- Average Reading Accuracy: {:0.5f}%\n"
                                   "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
-                                  "Average PSNR Greyscaling -> Bilateral Filtering :- {:0.4f}\n"
-                                  "Average PSNR Bilateral Filtering -> Adaptive Histogram Equalisation :- {:0.4f}\n"
-                                  "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding :- {:0.4f}\n".format(limit,
+                                  "- Bins of Most Commonly Incorrect Characters: {}\n"
+                                  "Average PSNR Greyscaling -> Bilateral Filtering : {:0.4f}\n"
+                                  "Average PSNR Bilateral Filtering -> Adaptive Histogram Equalisation : {:0.4f}\n"
+                                  "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding : {:0.4f}\n".format(limit,
                                                                                        end_time,
                                                                                        avg_processing_time,
                                                                                        avg_reading_accuracy,
@@ -408,6 +422,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                                                                        len(incorrect_reg),
                                                                                        limit,
                                                                                        incorrect_reg,
+                                                                                       commonly_incorrect_chars,
                                                                                        avg_psnr_grey_vs_bilateral,
                                                                                        avg_psnr_bilateral_vs_ahe,
                                                                                        avg_psnr_ahe_vs_thresholding))
@@ -530,8 +545,7 @@ def cl_args_handler():
             s_1a, s_1b, s_1c, s_1d = call_preprocessing_pipeline(stages)
             start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results)
 
-        print("\nSTAGES ", stages)
-        print("arg len ", len(sys.argv))
+        print("\nSTAGES enabled: ", stages)
 
 
 cl_args_handler()
