@@ -342,6 +342,7 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
             count = count + 1
             if count == limit:
                 end_time = time.time() - begin_time
+                avg_processing_time = end_time / limit
                 """
                     --- Result Metrics Output: ---
                 """
@@ -349,16 +350,16 @@ def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
                 f = open("anpr_results.txt", "w")
                 f.write("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
                       "Total time taken for {} inputs: {:0.2f} seconds\n"
-                      "Average time taken to process each input: XX.XX seconds\n"
+                      "Average time taken to process each input: {:0.2f} seconds\n"
                       "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
-                                                                                     end_time, len(incorrect_reg),
+                                                                                     end_time, avg_processing_time, len(incorrect_reg),
                                                                                      limit, incorrect_reg))
                 f.close()
                 print("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
                       "Total time taken for {} inputs: {:0.2f} seconds\n"
-                      "Average time taken to process each input: XX.XX seconds\n"
+                      "Average time taken to process each input: {:0.2f} seconds\n"
                       "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
-                                                                                     end_time, len(incorrect_reg),
+                                                                                     end_time, avg_processing_time, len(incorrect_reg),
                                                                                      limit, incorrect_reg))
                 # todo add average processing time for all inputs?
                 break
