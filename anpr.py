@@ -391,17 +391,21 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 """
                     --- Result Metrics Output: ---
                 """
+                print("SANITY CHECK ", correct, " ", limit)
                 avg_reading_accuracy = (correct / limit) * 100
                 results_output = ("+----------------+\n| Results Output|\n+----------------+\n"
-                                  "Average Reading Accuracy: {:0.2f}%\n"
                                   "Total time taken for {} inputs: {:0.2f} seconds\n"
                                   "Average time taken to process each input: {:0.2f} seconds\n"
-                                  "Incorrect Registrations {}/{} (Predicted, Actual): {}\n"
+                                  "- Average Reading Accuracy: {:0.2f}%\n"
+                                  "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
+                                  
+                                  
                                   "Peak Signal to Noise-Ratio (PSNR) avg. : \n"
-                                  "Mean Squared Error (MSE) avg. : (lower is better)\n".format(avg_reading_accuracy,
-                                                                                               limit,
+                                  "Mean Squared Error (MSE) avg. : (lower is better)\n".format(limit,
                                                                                                end_time,
                                                                                                avg_processing_time,
+                                                                                               avg_reading_accuracy,
+                                                                                               len(incorrect_reg) / limit,
                                                                                                len(incorrect_reg),
                                                                                                limit, incorrect_reg))
                 f = open("anpr_results.txt", "w")
