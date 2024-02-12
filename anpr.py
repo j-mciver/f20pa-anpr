@@ -262,7 +262,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     global data_dict
     data_dict = dict()
     global psnr_readings
-    psnr_readings = [[]]
+    psnr_readings = []
 
     limit = limit
     count = 0
@@ -391,8 +391,9 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             if count == limit:
                 end_time = time.time() - begin_time
                 avg_processing_time = end_time / limit
-                print(psnr_readings)
-                psnr_readings = sum(psnr_readings) / limit
+                avg_psnr_grey_vs_bilateral = sum(psnr[0] for psnr in psnr_readings) / limit
+                avg_psnr_bilateral_vs_ahe = sum(psnr[1] for psnr in psnr_readings) / limit
+                avg_psnr_ahe_vs_thresholding = sum(psnr[2] for psnr in psnr_readings) / limit
                 """
                     --- Result Metrics Output: ---
                 """
@@ -402,11 +403,10 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                   "Total time taken for {} inputs: {:0.2f} seconds\n"
                                   "Average time taken to process each input: {:0.2f} seconds\n"
                                   "- Average Reading Accuracy: {:0.2f}%\n"
-                                  "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
-                                  
-                                  
-                                  "Peak Signal to Noise-Ratio (PSNR) avg. {:0.4f}: \n"
-                                  "Mean Squared Error (MSE) avg. : (lower is better)\n".format(limit,
+                                  "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n\n"
+                                  "Average PSNR Greyscaling -> Bilateral Filtering :- {:0.4f}: \n"
+                                  "Average PSNR Bilateral Filtering -> Adaptive Histogram Equalisation :- {:0.4f}: \n"
+                                  "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding :- {:0.4f}: \n".format(limit,
                                                                                                end_time,
                                                                                                avg_processing_time,
                                                                                                avg_reading_accuracy,
@@ -414,7 +414,9 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                                                                                len(incorrect_reg),
                                                                                                limit,
                                                                                                incorrect_reg,
-                                                                                               psnr_readings))
+                                                                                               avg_psnr_grey_vs_bilateral,
+                                                                                               avg_psnr_bilateral_vs_ahe,
+                                                                                               avg_psnr_ahe_vs_thresholding))
                 f = open("anpr_results.txt", "w")
                 f.write(results_output)
                 f.close()
