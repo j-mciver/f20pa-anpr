@@ -388,7 +388,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 commonly_incorrect_chars = {}
                 # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
                 for reg in incorrect_reg:
-                    for i in range(7):
+                    for i in range(min(len(reg[0]), len(reg[1]))):
                         # predicted does not equal actual character
                         if reg[0][i] != reg[1][i]:
                             # update count if key exists
