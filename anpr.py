@@ -348,7 +348,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 # Reference displaying multiple images in matplotlib subplots:
                 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
                 # average image = 580x160 = 5.3 inches x 1.7 inches
-                fig = plt.figure(figsize=(20, 6))
+                fig = plt.figure(figsize=(14, 5))
 
                 i = 1
                 for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
@@ -363,7 +363,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     plt.axis("off")
                     i = i + 1
                 plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
-                plt.subplots_adjust(hspace=0.5)
+                plt.subplots_adjust(hspace=0.4)
                 plt.show()
 
             count = count + 1
@@ -374,23 +374,19 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     --- Result Metrics Output: ---
                 """
                 avg_reading_accuracy = (correct / limit) * 100
-                f = open("anpr_results.txt", "w")
-                f.write("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
-                        "Total time taken for {} inputs: {:0.2f} seconds\n"
-                        "Average time taken to process each input: {:0.2f} seconds\n"
-                        "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
-                                                                                       end_time, avg_processing_time,
-                                                                                       len(incorrect_reg),
-                                                                                       limit, incorrect_reg))
-                f.close()
-                print("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"
-                      "Total time taken for {} inputs: {:0.2f} seconds\n"
-                      "Average time taken to process each input: {:0.2f} seconds\n"
-                      "Incorrect Registrations {}/{} (Predicted, Actual): {}".format(avg_reading_accuracy, limit,
+                results_output = ("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n"\
+                                 "Total time taken for {} inputs: {:0.2f} seconds\n"\
+                                 "Average time taken to process each input: {:0.2f} seconds\n"\
+                                 "Incorrect Registrations {}/{} (Predicted, Actual): {}\n"\
+                                 "Peak Signal to Noise-Ratio (PSNR) avg. : \n"
+                                  "Mean Squared Error (MSE) avg. : (lower is better)\n".format(avg_reading_accuracy, limit,
                                                                                      end_time, avg_processing_time,
                                                                                      len(incorrect_reg),
                                                                                      limit, incorrect_reg))
-                # todo add average processing time for all inputs?
+                f = open("anpr_results.txt", "w")
+                f.write(results_output)
+                f.close()
+                print(results_output)
                 break
 
 
@@ -506,9 +502,9 @@ cl_args_handler()
 # https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 # Bilateral Filter: https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 # Peak-Signal to Noise Ratio: (OpenCV) https://shimat.github.io/opencvsharp_docs/html/23f56d6b-49ef-3365-5139-e75712c20fe4.htm
-# adaptive thresholding: https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
-# https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
-# https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
+# otsu's method + adaptive thresholding: https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
+# adaptive historgram equalisation https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
+# cca (identifying NP and characters in input image) https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
 # https://learnopencv.com/cropping-an-image-using-opencv/#cropping-using-opencv
 # resizing an image (opencv) tutorial reference: https://learnopencv.com/image-resizing-with-opencv/
