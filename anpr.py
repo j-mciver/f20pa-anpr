@@ -324,8 +324,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             plot_results = plot_results
             if plot_results:
                 # IF -v (verbose flag enabled) ... show
-                rows = 3
-                cols = 3
+                rows = 4
+                cols = 4
 
                 # OpenCV reads images BGR, matplotlib reads in RGB. Convert all images.
                 image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
@@ -335,8 +335,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
                 output = image.copy()
 
-                angle = stack.pop()
-                print("{:0.2f} deg of tilt".format(angle))
+                angle_str = "{:0.2f}° deg of tilt".format(stack.pop())
+                # print("{:0.2f}° deg of tilt".format(angle))
 
                 # reference: drawing around component border
                 # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
@@ -348,10 +348,15 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 # Reference displaying multiple images in matplotlib subplots:
                 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
                 # average image = 580x160 = 5.3 inches x 1.7 inches
-                fig = plt.figure(figsize=(14, 5))
+                fig = plt.figure(figsize=(20, 10))
+                fig.add_subplot(3, 3, 2)
+                plt.imshow(image)
+                plt.title("Input Image " + file)
+                plt.axis("off")
 
-                i = 1
-                for img, title in [[image, "Input Image " + file], [greyscale_img, "Greyscaled Input RGB Image"],
+                # [image, "Input Image " + file],
+                i = 5
+                for img, title in [[greyscale_img, "Greyscaled Input RGB Image"],
                                    [filtered_image, "Bilateral Filtered Image"],
                                    [ahe_img, "Adaptive Histogram Equalisation"],
                                    [th_img, "Adaptive Gaussian Thresholding"],
@@ -363,6 +368,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     plt.axis("off")
                     i = i + 1
                 plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
+
+                # place a text box in upper left in axes coords
+                props = dict(boxstyle='round', facecolor='wheat')
+                plt.text(1, 1, angle_str, fontsize=14,verticalalignment='top', bbox=props)
+
                 plt.subplots_adjust(hspace=0.4)
                 plt.show()
 
@@ -509,3 +519,4 @@ cl_args_handler()
 # https://learnopencv.com/cropping-an-image-using-opencv/#cropping-using-opencv
 # resizing an image (opencv) tutorial reference: https://learnopencv.com/image-resizing-with-opencv/
 # https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html (tilt correction based on affine transformation)
+# plot_results placing text boxes https://matplotlib.org/3.3.4/gallery/recipes/placing_text_boxes.html
