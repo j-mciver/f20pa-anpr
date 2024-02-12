@@ -397,13 +397,12 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 """
                     --- Result Metrics Output: ---
                 """
-                print("SANITY CHECK ", correct, " ", limit)
                 avg_reading_accuracy = (correct / limit) * 100
                 results_output = ("+----------------+\n| Results Output|\n+----------------+\n"
                                   "Total time taken for {} inputs: {:0.2f} seconds\n"
                                   "Average time taken to process each input: {:0.2f} seconds\n"
                                   "- Average Reading Accuracy: {:0.2f}%\n"
-                                  "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n\n"
+                                  "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
                                   "Average PSNR Greyscaling -> Bilateral Filtering :- {:0.4f}: \n"
                                   "Average PSNR Bilateral Filtering -> Adaptive Histogram Equalisation :- {:0.4f}: \n"
                                   "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding :- {:0.4f}: \n".format(limit,
