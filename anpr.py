@@ -37,9 +37,10 @@ def apply_bilateral_filter(img):
 # reference: bilateral filter algorithm https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 def iterative_bilateral_filter(img):
     fimg = apply_bilateral_filter(img)
-    psnr = cv2.PSNR(img, fimg)
-    data_dict["psnr"] = psnr
-    print("PSNR: %s" % (psnr))
+    # psnr = cv2.PSNR(img, fimg)
+    # avg_psnr.append(psnr)
+    # data_dict["psnr"] = psnr
+    # print("PSNR: %s" % (psnr))
     return fimg
 
 
@@ -51,8 +52,6 @@ def iterative_bilateral_filter(img):
     Reference: 
         https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
 """
-
-
 def adaptive_histogram_equalisation(img):
     ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
     return ahe.apply(img)
@@ -262,6 +261,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     incorrect_reg = []
     global data_dict
     data_dict = dict()
+    global psnr_readings
+    psnr_readings = [[]]
 
     limit = limit
     count = 0
@@ -317,6 +318,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 correct = correct + 1
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
+
+            psnr_readings.append([cv2.PSNR(greyscale_img, filtered_image), cv2.PSNR(filtered_image, ahe_img), cv2.PSNR(ahe_img, th_img)])
                 # todo: store incorrect template images (all ext chars and see confidence values)
                 # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
 
@@ -388,6 +391,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             if count == limit:
                 end_time = time.time() - begin_time
                 avg_processing_time = end_time / limit
+                print(psnr_readings)
+                psnr_readings = sum(psnr_readings) / limit
                 """
                     --- Result Metrics Output: ---
                 """
@@ -400,14 +405,16 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                   "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
                                   
                                   
-                                  "Peak Signal to Noise-Ratio (PSNR) avg. : \n"
+                                  "Peak Signal to Noise-Ratio (PSNR) avg. {:0.4f}: \n"
                                   "Mean Squared Error (MSE) avg. : (lower is better)\n".format(limit,
                                                                                                end_time,
                                                                                                avg_processing_time,
                                                                                                avg_reading_accuracy,
                                                                                                len(incorrect_reg) / limit,
                                                                                                len(incorrect_reg),
-                                                                                               limit, incorrect_reg))
+                                                                                               limit,
+                                                                                               incorrect_reg,
+                                                                                               psnr_readings))
                 f = open("anpr_results.txt", "w")
                 f.write(results_output)
                 f.close()
