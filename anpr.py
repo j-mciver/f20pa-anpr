@@ -7,9 +7,10 @@ import time
 from matplotlib import pyplot as plt
 import numpy as np
 
-image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented"
+# image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented"
+# image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"
 # todo: image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
-image_list = sorted(os.listdir(image_dir))
+# image_list = sorted(os.listdir(image_dir))
 
 templates_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/templates"
 templates_list = sorted(os.listdir(templates_dir))
@@ -77,7 +78,6 @@ def tilt_correction(th_img, component_mask):
     output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
     cv2.drawContours(output, [box], 0, (0, 255, 0), 2)
 
-    print("ANGLE BEFORE normalising", angle)
     if angle > 45:  # force warpAffine to rotate clockwise
         matrix = cv2.getRotationMatrix2D(centre, angle + 270, 1)
         angle = 360 - (angle + 270)
@@ -85,7 +85,6 @@ def tilt_correction(th_img, component_mask):
         matrix = cv2.getRotationMatrix2D(centre, angle, 1)
     stack.append(angle)
 
-    print("ANGLE AFTER ", angle)
     (h, w) = output.shape[:2]
     corrected_img = cv2.warpAffine(th_img, matrix, (w, h), flags=cv2.INTER_LINEAR)
 
@@ -252,7 +251,7 @@ def template_match(extracted_char_templates):
     1d :- Tilt Correction (Bilateral Transformation)"""
 
 
-def start(s_1a, s_1b, s_1c, s_1d, limit, plot_results):
+def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     print("start() method pipeline stages enabled: ", s_1a, s_1b, s_1c, s_1d)
     begin_time = time.time()
     correct = 0
@@ -460,7 +459,8 @@ def cl_args_handler():
 
         image_list = None
         if os.path.exists(args.d):
-            image_list = sorted(os.listdir(image_dir))
+            image_dir = args.d
+            image_list = sorted(os.listdir(args.d))
             print("valid path: ", args.d)
         else:
             raise Exception("Error: Invalid directory path provided.")
@@ -488,10 +488,10 @@ def cl_args_handler():
 
         if stages == [] and len(stages) == 0:
             # all stages are toggled off, call start with false enabled on all
-            start(False, False, False, False, limit, plot_results)
+            start(image_list, image_dir, limit, False, False, False, False, plot_results)
         elif len(stages) > 0:
             s_1a, s_1b, s_1c, s_1d = call_preprocessing_pipeline(stages)
-            start(s_1a, s_1b, s_1c, s_1d, limit, plot_results)
+            start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results)
 
         print("\nSTAGES ", stages)
         print("arg len ", len(sys.argv))
