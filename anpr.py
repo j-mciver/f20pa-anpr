@@ -333,22 +333,20 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 cols = 4
 
                 # OpenCV reads images BGR, matplotlib reads in RGB. Convert all images.
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                greyscale_img = cv2.cvtColor(greyscale_img, cv2.COLOR_BGR2RGB)
-                filtered_image = cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB)
-                ahe_img = cv2.cvtColor(ahe_img, cv2.COLOR_BGR2RGB)
-                th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
-                uncorrected_tilt_img = cv2.cvtColor(data_dict["uncorrected_tilt"], cv2.COLOR_BGR2RGB)
-                corrected_tilt_img = cv2.cvtColor(data_dict["corrected_img"], cv2.COLOR_BGR2RGB)
-                output = image.copy()
-
-                angle_str = "{:0.2f}° tilt".format(data_dict["angle"])
+                image = convert_bgr_rgb(image)
+                greyscale_img = convert_bgr_rgb(greyscale_img)
+                filtered_image = convert_bgr_rgb(filtered_image)
+                ahe_img = convert_bgr_rgb(ahe_img)
+                th_img = convert_bgr_rgb(th_img)
+                uncorrected_tilt_img = convert_bgr_rgb(data_dict["uncorrected_tilt"])
+                corrected_tilt_img = convert_bgr_rgb(data_dict["corrected_img"])
+                cca_output = corrected_tilt_img.copy()
 
                 # reference: drawing around component border
                 # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
                 for r in rect_border:
                     # (x, y), (x + w, y + h)
-                    cv2.rectangle(output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
+                    cv2.rectangle(cca_output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
                 char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
 
                 # Reference displaying multiple images in matplotlib subplots:
@@ -365,22 +363,23 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
                 display_results(fig, rows, cols, 5, noise_removal_data)
 
-                tilt_correction_data = [[uncorrected_tilt_img, "Uncorrected Tilt"], [corrected_tilt_img, "Corrected Tilt"]]
-                print(uncorrected_tilt_img.dtype)
-                print(corrected_tilt_img.dtype)
-                display_results(fig, 4, 4, 9, tilt_correction_data)
+                # tilt correction data
+                display_results(fig, rows, cols, 10, [[uncorrected_tilt_img, "Uncorrected Tilt"]])
+                # place a text box in upper left in axes coords
+                props = dict(boxstyle='round', facecolor='wheat')
+                angle_str = "{:0.2f}° tilt".format(data_dict["angle"])
+                plt.text(0.5, 170, angle_str, fontsize=14, verticalalignment='top', bbox=props)
+                display_results(fig, rows, cols, 11, [[corrected_tilt_img, "Corrected Tilt"]])
+
+                display_results(fig, rows, cols, 14, [[cca_output, "Connected Component Analysis (CCA)"]])
 
                 # output stage data
-
                 # NP registration prediction / match:
                 # plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
 
-                # place a text box in upper left in axes coords
-                props = dict(boxstyle='round', facecolor='wheat')
-                plt.text(1, 1, angle_str, fontsize=14, verticalalignment='top', bbox=props)
 
-                plt.subplots_adjust(hspace=1.5)
-                plt.tight_layout()
+
+                plt.subplots_adjust(hspace=1.1)
                 plt.show()
 
             count = count + 1
@@ -413,10 +412,13 @@ def display_results(fig, rows, cols, index, data):
     i = index
     for img, title in data:
         fig.add_subplot(rows, cols, i)
-        plt.imshow(img)
+        plt.imshow(img, aspect='auto')
         plt.title(title, {'fontname': 'Arial'})
         plt.axis("off")
         i = i + 1
+
+def convert_bgr_rgb(img):
+    return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 def parse_stage_args(stages):
     stages = stages.replace(" ", "").strip()
