@@ -210,7 +210,7 @@ def template_match(extracted_char_templates):
     # All the 6 methods for comparison in a list
     methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
                'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
-
+    confidence = []
     max_confidence = 0
     best_guess_char = ""
     reg = ""
@@ -230,21 +230,19 @@ def template_match(extracted_char_templates):
             res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-            # todo: implement more intelligent logic against controlling confidence (will have to write assumption)
-            # assumption is 2 character, 2 digits, 3 characters so 3rd and 4th itertaion picks highest correlation from number template set
             if max_val >= threshold:
                 if max_val > max_confidence:
                     max_confidence = max_val
                     best_guess_char = template[0]
-                # print("match found! confidence: ", max_val)
-                # print("CHARACTER:",template[0])
+
         print("MAX CONFIDENCE: ", max_confidence, " CHAR = ", best_guess_char)
         reg += best_guess_char
+        confidence.append(max_confidence)
         max_confidence = 0
         best_guess_char = ""
 
     print(reg.upper())
-    return reg
+    return reg, confidence
 
 
 """ start() method - accepts input image directory and runs ANPR pipeline stages, returning predicted match against input
@@ -304,7 +302,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             ext_char_templates = extract_characters(char_img, rect_border)
 
             # Template Matching
-            reg = template_match(ext_char_templates)
+            reg, confidence = template_match(ext_char_templates)
 
             # Number Plate Assumption: (A1) The letter 'I'/'i' does not appear in NPs, only 1. (REF Gov Standards)
             # A2: The letter 'O' and number '0' are equivalent (REF Gov Standard)
@@ -315,6 +313,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 file = file.replace("O", "0")
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
+            print(confidence)
             if reg.upper() == file[:7]:
                 correct = correct + 1
             else:
@@ -347,7 +346,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 for r in rect_border:
                     # (x, y), (x + w, y + h)
                     cv2.rectangle(cca_output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
-                char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
+                # char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
 
                 # Reference displaying multiple images in matplotlib subplots:
                 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
@@ -373,6 +372,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
                 display_results(fig, rows, cols, 14, [[cca_output, "Connected Component Analysis (CCA)"]])
 
+                # for e in ext_char_templates:
+                #     cv2.imshow("test", e)
+                #     cv2.waitKey(0)
+                #     cv2.destroyAllWindows()
+
                 # output stage data
                 # NP registration prediction / match:
                 # plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
@@ -390,10 +394,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     --- Result Metrics Output: ---
                 """
                 avg_reading_accuracy = (correct / limit) * 100
-                results_output = ("--- Result Metrics Output: ---\nAverage Reading Accuracy: {:0.2f}%\n" \
-                                  "Total time taken for {} inputs: {:0.2f} seconds\n" \
-                                  "Average time taken to process each input: {:0.2f} seconds\n" \
-                                  "Incorrect Registrations {}/{} (Predicted, Actual): {}\n" \
+                results_output = ("+----------------+\n| Results Output|\n+----------------+\n"
+                                  "Average Reading Accuracy: {:0.2f}%\n"
+                                  "Total time taken for {} inputs: {:0.2f} seconds\n"
+                                  "Average time taken to process each input: {:0.2f} seconds\n"
+                                  "Incorrect Registrations {}/{} (Predicted, Actual): {}\n"
                                   "Peak Signal to Noise-Ratio (PSNR) avg. : \n"
                                   "Mean Squared Error (MSE) avg. : (lower is better)\n".format(avg_reading_accuracy,
                                                                                                limit,
