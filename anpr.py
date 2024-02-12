@@ -38,7 +38,7 @@ def apply_bilateral_filter(img):
 def iterative_bilateral_filter(img):
     fimg = apply_bilateral_filter(img)
     psnr = cv2.PSNR(img, fimg)
-    stack.append({"PSNR": psnr})
+    data_dict["psnr"] = psnr
     print("PSNR: %s" % (psnr))
     return fimg
 
@@ -78,16 +78,21 @@ def tilt_correction(th_img, component_mask):
 
     output = cv2.cvtColor(th_img, cv2.COLOR_GRAY2RGB)
     cv2.drawContours(output, [box], 0, (0, 255, 0), 2)
+    data_dict["uncorrected_tilt"] = output
+    # cv2.imshow("identified tilt / np", output)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
     if angle > 45:  # force warpAffine to rotate clockwise
         matrix = cv2.getRotationMatrix2D(centre, angle + 270, 1)
         angle = 360 - (angle + 270)
     else:
         matrix = cv2.getRotationMatrix2D(centre, angle, 1)
-    stack.append(angle)
+    data_dict["angle"] = angle
 
     (h, w) = output.shape[:2]
     corrected_img = cv2.warpAffine(th_img, matrix, (w, h), flags=cv2.INTER_LINEAR)
+    data_dict["corrected_img"] = corrected_img
 
     print("TILT CORRECTION:")
     print(centre)
@@ -257,8 +262,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     begin_time = time.time()
     correct = 0
     incorrect_reg = []
-    global stack
-    stack = []
+    global data_dict
+    data_dict = dict()
 
     limit = limit
     count = 0
@@ -333,10 +338,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 filtered_image = cv2.cvtColor(filtered_image, cv2.COLOR_BGR2RGB)
                 ahe_img = cv2.cvtColor(ahe_img, cv2.COLOR_BGR2RGB)
                 th_img = cv2.cvtColor(th_img, cv2.COLOR_BGR2RGB)
+                uncorrected_tilt_img = cv2.cvtColor(data_dict["uncorrected_tilt"], cv2.COLOR_BGR2RGB)
+                corrected_tilt_img = cv2.cvtColor(data_dict["corrected_img"], cv2.COLOR_BGR2RGB)
                 output = image.copy()
 
-                angle_str = "{:0.2f}° tilt".format(stack.pop())
-                # print("{:0.2f}° deg of tilt".format(angle))
+                angle_str = "{:0.2f}° tilt".format(data_dict["angle"])
 
                 # reference: drawing around component border
                 # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
@@ -359,11 +365,12 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
                 display_results(fig, rows, cols, 5, noise_removal_data)
 
-                # tilt correction data
-                display_results(fig, 1, 2, 9, [[]])
+                tilt_correction_data = [[uncorrected_tilt_img, "Uncorrected Tilt"], [corrected_tilt_img, "Corrected Tilt"]]
+                print(uncorrected_tilt_img.dtype)
+                print(corrected_tilt_img.dtype)
+                display_results(fig, 4, 4, 9, tilt_correction_data)
 
                 # output stage data
-                display_results(fig, rows, cols, 9, [[output, "Connected Components (Characters)"], [char_img, "Characters of " + file]])
 
                 # NP registration prediction / match:
                 # plt.text(850, 100, reg.upper(), fontsize="40", fontname='Arial', color="black")
@@ -373,6 +380,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 plt.text(1, 1, angle_str, fontsize=14, verticalalignment='top', bbox=props)
 
                 plt.subplots_adjust(hspace=1.5)
+                plt.tight_layout()
                 plt.show()
 
             count = count + 1
