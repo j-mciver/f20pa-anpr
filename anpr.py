@@ -329,13 +329,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             print("%s took %s seconds\n" % (file, time.time() - start_time))
             if reg.upper() == file[:7]:
                 correct = correct + 1
-                for i in range(0, len(reg)):
-                    if reg[i] in mean_confidence_dict:
-                        mean_confidence_dict[reg[i]][1] += 1
-                        mean_confidence_dict[reg[i]][0] += confidence[i]
-                    else:
-                        mean_confidence_dict[reg[i]] = [confidence[i], 1]
-
+                calc_mean_confidence(mean_confidence_dict, reg, confidence)
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
 
@@ -475,6 +469,19 @@ def display_results(fig, rows, cols, index, data):
 
 def convert_bgr_rgb(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+""" Calculates a running average of the maximum confidence for each template match.
+    This method calculates mean confidence on positive results, where the prediction was correct.
+    
+    Returns dictionary containing character/digit and average confidence
+"""
+def calc_mean_confidence(dict, reg, confidence):
+    for i in range(0, len(reg)):
+        if reg[i] in dict:
+            dict[reg[i]][1] += 1
+            dict[reg[i]][0] += confidence[i]
+        else:
+            dict[reg[i]] = [confidence[i], 1]
 
 
 def parse_stage_args(stages):
