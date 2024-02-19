@@ -276,11 +276,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     limit = limit
     count = 0
     for file in image_list:
-        # todo remove
-        # if file != "AQ90LIZ.png":
-        #     continue
         print(file)
-
         start_time = time.time()
         if file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".jpg"):
             print("Processing {0}".format(file))
@@ -328,10 +324,19 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
             print("%s took %s seconds\n" % (file, time.time() - start_time))
             if reg.upper() == file[:7]:
-                correct = correct + 1
+                correct += 1
                 calc_mean_confidence(mean_confidence_dict, reg, confidence)
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
+                actual_reg = file[:7].lower()
+                # find the index(es) that were incorrect, update confidence array to reflect true prediction
+                for i in range(min(len(reg), len(actual_reg))):
+                    # predicted does not equal actual character
+                    if reg[i] != actual_reg[i]:
+                        confidence[i] = confidence_distribution[i].get(actual_reg[i])
+                calc_mean_confidence(mean_confidence_dict, actual_reg, confidence)
+                # todo: write top 5/10/15 results (based on confidence distribution) for incorrect guesses
+
 
             psnr_readings.append(
                 [cv2.PSNR(greyscale_img, filtered_image), cv2.PSNR(filtered_image, ahe_img), cv2.PSNR(ahe_img, th_img)])
@@ -471,7 +476,7 @@ def convert_bgr_rgb(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 """ Calculates a running average of the maximum confidence for each template match.
-    This method calculates mean confidence on positive results, where the prediction was correct.
+    This method calculates mean confidence on both positive and negative results, where the prediction was correct/incorrect.
     
     Returns dictionary containing character/digit and average confidence
 """
