@@ -229,7 +229,6 @@ def template_match(extracted_char_templates):
 
             tmp_dict[template[0]] = max_val
 
-
             if max_val > max_confidence:
                 max_confidence = max_val
                 best_guess_char = template[0]
@@ -334,11 +333,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     # predicted does not equal actual character
                     if reg[i] != actual_reg[i]:
                         confidence[i] = confidence_distribution[i].get(actual_reg[i])
-                calc_mean_confidence(mean_confidence_dict, actual_reg, confidence)
+                        reg = reg[:i] + actual_reg[i] + reg[i+1:]
+
+                calc_mean_confidence(mean_confidence_dict, reg, confidence)
                 # todo: write top 5/10/15 results (based on confidence distribution) for incorrect guesses
 
-
-            print(cv2.PSNR(greyscale_img, th_img))
             psnr_readings.append(cv2.PSNR(greyscale_img, th_img))
             # todo: store incorrect template images (all ext chars and see confidence values)
             # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
@@ -406,10 +405,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 # Results Metric - Most Commonly Incorrect Characters
                 for key, arr in mean_confidence_dict.items():
                     mean_confidence_dict[key] = arr[0] / arr[1]
-
                 mean_confidence_dict = sorted(mean_confidence_dict.items(), key=lambda x: x[1])
 
-                print("PRINTING MEAN CONFIDENCE\n", mean_confidence_dict)
                 misread_chars_dict = {}
                 # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
                 for reg in incorrect_reg:
@@ -430,13 +427,14 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     --- Result Metrics Output: ---
                 """
                 avg_reading_accuracy = (correct / limit) * 100
-                results_output = ("+----------------+\n| Results Output|\n+----------------+\n"
+                results_output = ("+----------------+\n| Results Output |\n+----------------+\n"
                                   "Total time taken for {} inputs: {:0.5f} seconds\n"
                                   "Average time taken to process each input: {:0.5f} seconds\n"
                                   "- Average Reading Accuracy: {:0.5f}%\n"
                                   "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
                                   "- Bins of Most Commonly Incorrect Characters (Actual char was misread as .. ): {}\n"
-                                  "Average PSNR (Greyscale Input [ .. -> .. ] Thresholding Output : {:0.4f}\n"
+                                  "Average PSNR (Greyscale Input <--> Preprocessed Image Output) : {:0.4f}\n"
+                                  "Mean Confidence Per Character: {}"
                 .format(
                     limit,
                     end_time,
@@ -447,7 +445,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     limit,
                     incorrect_reg,
                     misread_chars_dict,
-                    avg_psnr))
+                    avg_psnr,
+                    mean_confidence_dict))
 
                 f = open("anpr_results.txt", "w")
                 f.write(results_output)
@@ -469,11 +468,14 @@ def display_results(fig, rows, cols, index, data):
 def convert_bgr_rgb(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
+
 """ Calculates a running average of the maximum confidence for each template match.
     This method calculates mean confidence on both positive and negative results, where the prediction was correct/incorrect.
     
     Returns dictionary containing character/digit and average confidence
 """
+
+
 def calc_mean_confidence(dict, reg, confidence):
     for i in range(0, len(reg)):
         if reg[i] in dict:
