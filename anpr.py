@@ -257,6 +257,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     data_dict = dict()
     global psnr_readings
     psnr_readings = []
+    global mean_confidence_dict
+    mean_confidence_dict = dict()
 
     limit = limit
     count = 0
@@ -305,7 +307,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
             # Number Plate Assumption: (A1) The letter 'I'/'i' does not appear in NPs, only 1. (REF Gov Standards)
             # A2: The letter 'O' and number '0' are equivalent (REF Gov Standard)
-            # Equivalent Character Assumptions (todo: use domain knowledge for this?)
+            # Equivalent Character Assumptions (todo: domain knowledge assumption)
             if "I" in file:
                 file = file.replace("I", "1")
             if "O" in file:
@@ -314,6 +316,18 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             print("%s took %s seconds\n" % (file, time.time() - start_time))
             if reg.upper() == file[:7]:
                 correct = correct + 1
+                for i in range(0, len(reg)):
+                    print(reg[i], " ", confidence[i])
+                    if reg[i] in mean_confidence_dict:
+                        mean_confidence_dict[reg[i]][1] += 1
+                        mean_confidence_dict[reg[i]][0] += confidence[i]
+                    else:
+                        mean_confidence_dict[reg[i]] = [confidence[i], 1]
+
+                for key, arr in mean_confidence_dict.items():
+                    mean_confidence_dict[key] = arr[0] / arr[1]
+
+
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
 
@@ -322,12 +336,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
 
             """--- DISPLAY PROCESSED IMAGES --- 
-                Contents are only displayed if -v command line arg is provided (verbose flag enabled)
+                Contents are only displayed if -p command line arg is provided (plot results enabled)
                 else, result metrics are pushed to display
             """
             plot_results = plot_results
             if plot_results:
-                # IF -v (verbose flag enabled) ... show
                 rows = 4
                 cols = 4
 
@@ -388,6 +401,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             count = count + 1
             if count == limit:
                 # Results Metric - Most Commonly Incorrect Characters
+                print("PRINTING MEAN CONFIDENCE\n", mean_confidence_dict)
                 misread_chars_dict = {}
                 # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
                 # todo: need to know what the real character was misread as e.g. B was misread as a H, H was misread as a B. print the confidence of top 5 results?
