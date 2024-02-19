@@ -52,6 +52,8 @@ def iterative_bilateral_filter(img):
     Reference: 
         https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
 """
+
+
 def adaptive_histogram_equalisation(img):
     ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
     return ahe.apply(img)
@@ -205,15 +207,16 @@ def template_match(extracted_char_templates):
     methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
                'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
     confidence = []
+    confidence_distribution = []
     max_confidence = 0
     best_guess_char = ""
     reg = ""
 
-    threshold = 0.0
     for ext_char in extracted_char_templates:
         # cv2.imshow("ext_char", ext_char)
         # cv2.waitKey(0)
         # cv2.destroyAllWindows()
+        tmp_dict = {}
         for template in templates_list:
             template_path = templates_dir + "/" + template
 
@@ -224,10 +227,12 @@ def template_match(extracted_char_templates):
             res = cv2.matchTemplate(ext_char, tmp_img, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-            if max_val >= threshold:
-                if max_val > max_confidence:
-                    max_confidence = max_val
-                    best_guess_char = template[0]
+            tmp_dict[template[0]] = max_val
+
+
+            if max_val > max_confidence:
+                max_confidence = max_val
+                best_guess_char = template[0]
 
         print("MAX CONFIDENCE: ", max_confidence, " CHAR = ", best_guess_char)
         # todo: EXTREMELY HIGH DOMAIN LEVEL KNOWLEDGE ASSUMPTION - testing has shown that very poor confidence is most likely a 1 due to issues with extracting and comparing one as a char
@@ -235,11 +240,17 @@ def template_match(extracted_char_templates):
             best_guess_char = '1'
         reg += best_guess_char
         confidence.append(max_confidence)
+
+        tmp_dict = sorted(tmp_dict.items(), key=lambda con: con[1])
+        confidence_distribution.append(tmp_dict)
+
         max_confidence = 0
         best_guess_char = ""
 
+    for entry in confidence_distribution:
+        print(entry)
     print(reg.upper())
-    return reg, confidence
+    return reg, confidence, confidence_distribution
 
 
 """ start() method - accepts input image directory and runs ANPR pipeline stages, returning predicted match 
@@ -249,6 +260,8 @@ def template_match(extracted_char_templates):
         1b :- Improving Contrast (Adaptive Histogram Equalisation)
         1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding (off)
         1d :- Tilt Correction (Bilateral Transformation)"""
+
+
 def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     begin_time = time.time()
     correct = 0
@@ -303,7 +316,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             ext_char_templates = extract_characters(char_img, rect_border)
 
             # Template Matching
-            reg, confidence = template_match(ext_char_templates)
+            reg, confidence, confidence_distribution = template_match(ext_char_templates)
 
             # Number Plate Assumption: (A1) The letter 'I'/'i' does not appear in NPs, only 1. (REF Gov Standards)
             # A2: The letter 'O' and number '0' are equivalent (REF Gov Standard)
@@ -326,9 +339,10 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
 
-            psnr_readings.append([cv2.PSNR(greyscale_img, filtered_image), cv2.PSNR(filtered_image, ahe_img), cv2.PSNR(ahe_img, th_img)])
-                # todo: store incorrect template images (all ext chars and see confidence values)
-                # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
+            psnr_readings.append(
+                [cv2.PSNR(greyscale_img, filtered_image), cv2.PSNR(filtered_image, ahe_img), cv2.PSNR(ahe_img, th_img)])
+            # todo: store incorrect template images (all ext chars and see confidence values)
+            # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
 
             """--- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -p command line arg is provided (plot results enabled)
@@ -354,11 +368,9 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 for r in rect_border:
                     # (x, y), (x + w, y + h)
                     cv2.rectangle(cca_output, (r[0], r[1]), (r[0] + r[2], r[1] + r[3]), (0, 255, 0), 3)
-                # char_img = cv2.cvtColor(char_img, cv2.COLOR_BGR2RGB)
 
                 # Reference displaying multiple images in matplotlib subplots:
                 # https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
-                # average image = 580x160 = 5.3 inches x 1.7 inches
                 fig = plt.figure(figsize=(16, 8))
                 display_results(fig, 3, 3, 2, [[image, "Input Image " + file]])
 
@@ -372,14 +384,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
                 # tilt correction data
                 display_results(fig, rows, cols, 10, [[uncorrected_tilt_img, "Uncorrected Tilt"]])
-                # place a text box in upper left in axes coords
                 props = dict(boxstyle='round', facecolor='wheat')
                 angle_str = "{:0.2f}° tilt".format(data_dict["angle"])
                 plt.text(0.5, 170, angle_str, fontsize=14, verticalalignment='top', bbox=props)
                 display_results(fig, rows, cols, 11, [[corrected_tilt_img, "Corrected Tilt"]])
-
                 display_results(fig, rows, cols, 14, [[cca_output, "Connected Component Analysis (CCA)"]])
-
 
                 # output stage data
                 # NP registration prediction / match:
@@ -399,15 +408,16 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 for key, arr in mean_confidence_dict.items():
                     mean_confidence_dict[key] = arr[0] / arr[1]
 
+                mean_confidence_dict = sorted(mean_confidence_dict.items(), key=lambda x: x[1])
+
                 print("PRINTING MEAN CONFIDENCE\n", mean_confidence_dict)
                 misread_chars_dict = {}
                 # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
-                # todo: need to know what the real character was misread as e.g. B was misread as a H, H was misread as a B. print the confidence of top 5 results?
                 for reg in incorrect_reg:
                     for i in range(min(len(reg[0]), len(reg[1]))):
                         # predicted does not equal actual character
                         if reg[0][i] != reg[1][i]:
-                            print("sys MISREAD character {} as a {}".format(reg[1][i], reg[0][i]))
+                            # print("sys MISREAD character {} as a {}".format(reg[1][i], reg[0][i]))
                             # update count if key exists
                             if (reg[1][i], reg[0][i]) in misread_chars_dict:
                                 misread_chars_dict[(reg[1][i], reg[0][i])] += 1
@@ -424,25 +434,28 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 """
                 avg_reading_accuracy = (correct / limit) * 100
                 results_output = ("+----------------+\n| Results Output|\n+----------------+\n"
-                                  "Total time taken for {} inputs: {:0.2f} seconds\n"
+                                  "Total time taken for {} inputs: {:0.5f} seconds\n"
                                   "Average time taken to process each input: {:0.5f} seconds\n"
                                   "- Average Reading Accuracy: {:0.5f}%\n"
                                   "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
                                   "- Bins of Most Commonly Incorrect Characters: {}\n"
                                   "Average PSNR Greyscaling -> Bilateral Filtering : {:0.4f}\n"
                                   "Average PSNR Bilateral Filtering -> Adaptive Histogram Equalisation : {:0.4f}\n"
-                                  "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding : {:0.4f}\n".format(limit,
-                                                                                       end_time,
-                                                                                       avg_processing_time,
-                                                                                       avg_reading_accuracy,
-                                                                                       len(incorrect_reg) / limit,
-                                                                                       len(incorrect_reg),
-                                                                                       limit,
-                                                                                       incorrect_reg,
-                                                                                       misread_chars_dict,
-                                                                                       avg_psnr_grey_vs_bilateral,
-                                                                                       avg_psnr_bilateral_vs_ahe,
-                                                                                       avg_psnr_ahe_vs_thresholding))
+                                  "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding : {:0.4f}\n"
+                .format(
+                    limit,
+                    end_time,
+                    avg_processing_time,
+                    avg_reading_accuracy,
+                    len(incorrect_reg) / limit,
+                    len(incorrect_reg),
+                    limit,
+                    incorrect_reg,
+                    misread_chars_dict,
+                    avg_psnr_grey_vs_bilateral,
+                    avg_psnr_bilateral_vs_ahe,
+                    avg_psnr_ahe_vs_thresholding))
+
                 f = open("anpr_results.txt", "w")
                 f.write(results_output)
                 f.close()
@@ -459,8 +472,10 @@ def display_results(fig, rows, cols, index, data):
         plt.axis("off")
         i = i + 1
 
+
 def convert_bgr_rgb(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
 
 def parse_stage_args(stages):
     stages = stages.replace(" ", "").strip()
@@ -529,7 +544,7 @@ def cl_args_handler():
         if os.path.exists(args.d):
             image_dir = args.d
             image_list = sorted(os.listdir(args.d))
-            print("valid path: ", args.d)
+            print("Valid path: ", args.d)
         else:
             raise Exception("Error: Invalid directory path provided.")
 
@@ -537,7 +552,7 @@ def cl_args_handler():
             limit = len(image_list)
         elif isinstance(args.l, int) and args.l <= len(image_list) and len(image_list) > 0:
             limit = args.l
-            print("valid limit :- ", limit)
+            print("Limit :- ", limit)
         else:
             raise Exception("Error: Limit out of bounds. Limit entered exceeds the amount of items present in the "
                             "directory.")
@@ -550,7 +565,7 @@ def cl_args_handler():
         else:
             plot_results = False
 
-        print("PLOT RESULTS: ", plot_results)
+        print("Plot Results: ", plot_results)
 
         stages = parse_stage_args(args.s)
 
@@ -565,7 +580,6 @@ def cl_args_handler():
 
 
 cl_args_handler()
-# start()
 
 # REFERENCES
 # argparse usage https://docs.python.org/3/library/argparse.html
@@ -580,3 +594,4 @@ cl_args_handler()
 # resizing an image (opencv) tutorial reference: https://learnopencv.com/image-resizing-with-opencv/
 # https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html (tilt correction based on affine transformation)
 # plot_results placing text boxes https://matplotlib.org/3.3.4/gallery/recipes/placing_text_boxes.html
+# sorting python dictionary by values: https://www.freecodecamp.org/news/sort-dictionary-by-value-in-python/
