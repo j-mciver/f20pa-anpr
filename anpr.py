@@ -211,9 +211,9 @@ def template_match(extracted_char_templates):
 
     threshold = 0.0
     for ext_char in extracted_char_templates:
-        # cv2.imshow("ext_char", ext_char)
-        # cv2.waitKey(0)
-        # cv2.destroyAllWindows()
+        cv2.imshow("ext_char", ext_char)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
         for template in templates_list:
             template_path = templates_dir + "/" + template
 
@@ -230,6 +230,9 @@ def template_match(extracted_char_templates):
                     best_guess_char = template[0]
 
         print("MAX CONFIDENCE: ", max_confidence, " CHAR = ", best_guess_char)
+        # todo: EXTREMELY HIGH DOMAIN LEVEL KNOWLEDGE ASSUMPTION - testing has shown that very poor confidence is most likely a 1 due to issues with extracting and comparing one as a char
+        if max_confidence < 0.30:
+            best_guess_char = '1'
         reg += best_guess_char
         confidence.append(max_confidence)
         max_confidence = 0
@@ -239,18 +242,14 @@ def template_match(extracted_char_templates):
     return reg, confidence
 
 
-""" start() method - accepts input image directory and runs ANPR pipeline stages, returning predicted match against input
+""" start() method - accepts input image directory and runs ANPR pipeline stages, returning predicted match 
 
     Toggleable Pre-processing Pipeline Stages:
-    
-    1a :- Noise Removal (Bilateral Filtering)
-    1b :- Improving Contrast (Adaptive Histogram Equalisation)
-    1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding (off)
-    1d :- Tilt Correction (Bilateral Transformation)"""
-
-
+        1a :- Noise Removal (Bilateral Filtering)
+        1b :- Improving Contrast (Adaptive Histogram Equalisation)
+        1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding (off)
+        1d :- Tilt Correction (Bilateral Transformation)"""
 def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
-    print("start() method pipeline stages enabled: ", s_1a, s_1b, s_1c, s_1d)
     begin_time = time.time()
     correct = 0
     incorrect_reg = []
@@ -262,7 +261,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     limit = limit
     count = 0
     for file in image_list:
+        # todo remove
+        if file != "AQ90LIZ.png":
+            continue
         print(file)
+
         start_time = time.time()
         if file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".jpg"):
             print("Processing {0}".format(file))
@@ -385,17 +388,19 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             count = count + 1
             if count == limit:
                 # Results Metric - Most Commonly Incorrect Characters
-                commonly_incorrect_chars = {}
+                misread_chars_dict = {}
                 # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
+                # todo: need to know what the real character was misread as e.g. B was misread as a H, H was misread as a B. print the confidence of top 5 results?
                 for reg in incorrect_reg:
                     for i in range(min(len(reg[0]), len(reg[1]))):
                         # predicted does not equal actual character
                         if reg[0][i] != reg[1][i]:
+                            print("sys MISREAD character {} as a {}".format(reg[1][i], reg[0][i]))
                             # update count if key exists
-                            if reg[1][i] in commonly_incorrect_chars:
-                                commonly_incorrect_chars[reg[1][i]] += 1
+                            if reg[1][i] in misread_chars_dict:
+                                misread_chars_dict[(reg[1][i], reg[0][i])] += 1
                             else:
-                                commonly_incorrect_chars[reg[1][i]] = 1
+                                misread_chars_dict[(reg[1][i], reg[0][i])] = 1
 
                 end_time = time.time() - begin_time
                 avg_processing_time = end_time / limit
@@ -422,7 +427,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                                                                        len(incorrect_reg),
                                                                                        limit,
                                                                                        incorrect_reg,
-                                                                                       commonly_incorrect_chars,
+                                                                                       misread_chars_dict,
                                                                                        avg_psnr_grey_vs_bilateral,
                                                                                        avg_psnr_bilateral_vs_ahe,
                                                                                        avg_psnr_ahe_vs_thresholding))
@@ -509,7 +514,6 @@ def cl_args_handler():
                             required=False)
         args = parser.parse_args()
 
-        image_list = None
         if os.path.exists(args.d):
             image_dir = args.d
             image_list = sorted(os.listdir(args.d))
@@ -539,7 +543,7 @@ def cl_args_handler():
         stages = parse_stage_args(args.s)
 
         if stages == [] and len(stages) == 0:
-            # all stages are toggled off, call start with false enabled on all
+            # no stages specified, call start with not enabled on all
             start(image_list, image_dir, limit, False, False, False, False, plot_results)
         elif len(stages) > 0:
             s_1a, s_1b, s_1c, s_1d = call_preprocessing_pipeline(stages)
