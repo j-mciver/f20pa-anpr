@@ -211,9 +211,9 @@ def template_match(extracted_char_templates):
 
     threshold = 0.0
     for ext_char in extracted_char_templates:
-        cv2.imshow("ext_char", ext_char)
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        # cv2.imshow("ext_char", ext_char)
+        # cv2.waitKey(0)
+        # cv2.destroyAllWindows()
         for template in templates_list:
             template_path = templates_dir + "/" + template
 
@@ -262,8 +262,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     count = 0
     for file in image_list:
         # todo remove
-        if file != "AQ90LIZ.png":
-            continue
+        # if file != "AQ90LIZ.png":
+        #     continue
         print(file)
 
         start_time = time.time()
@@ -397,7 +397,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                         if reg[0][i] != reg[1][i]:
                             print("sys MISREAD character {} as a {}".format(reg[1][i], reg[0][i]))
                             # update count if key exists
-                            if reg[1][i] in misread_chars_dict:
+                            if (reg[1][i], reg[0][i]) in misread_chars_dict:
                                 misread_chars_dict[(reg[1][i], reg[0][i])] += 1
                             else:
                                 misread_chars_dict[(reg[1][i], reg[0][i])] = 1
@@ -413,7 +413,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 avg_reading_accuracy = (correct / limit) * 100
                 results_output = ("+----------------+\n| Results Output|\n+----------------+\n"
                                   "Total time taken for {} inputs: {:0.2f} seconds\n"
-                                  "Average time taken to process each input: {:0.2f} seconds\n"
+                                  "Average time taken to process each input: {:0.5f} seconds\n"
                                   "- Average Reading Accuracy: {:0.5f}%\n"
                                   "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
                                   "- Bins of Most Commonly Incorrect Characters: {}\n"
