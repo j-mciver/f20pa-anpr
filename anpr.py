@@ -241,7 +241,7 @@ def template_match(extracted_char_templates):
         reg += best_guess_char
         confidence.append(max_confidence)
 
-        tmp_dict = sorted(tmp_dict.items(), key=lambda con: con[1])
+        tmp_dict = dict(reversed(sorted(tmp_dict.items(), key=lambda con: con[1])))
         confidence_distribution.append(tmp_dict)
 
         max_confidence = 0
