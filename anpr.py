@@ -338,8 +338,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 # todo: write top 5/10/15 results (based on confidence distribution) for incorrect guesses
 
 
-            psnr_readings.append(
-                [cv2.PSNR(greyscale_img, filtered_image), cv2.PSNR(filtered_image, ahe_img), cv2.PSNR(ahe_img, th_img)])
+            print(cv2.PSNR(greyscale_img, th_img))
+            psnr_readings.append(cv2.PSNR(greyscale_img, th_img))
             # todo: store incorrect template images (all ext chars and see confidence values)
             # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
 
@@ -425,9 +425,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
                 end_time = time.time() - begin_time
                 avg_processing_time = end_time / limit
-                avg_psnr_grey_vs_bilateral = sum(psnr[0] for psnr in psnr_readings) / limit
-                avg_psnr_bilateral_vs_ahe = sum(psnr[1] for psnr in psnr_readings) / limit
-                avg_psnr_ahe_vs_thresholding = sum(psnr[2] for psnr in psnr_readings) / limit
+                avg_psnr = sum(psnr for psnr in psnr_readings) / limit
                 """
                     --- Result Metrics Output: ---
                 """
@@ -437,10 +435,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                   "Average time taken to process each input: {:0.5f} seconds\n"
                                   "- Average Reading Accuracy: {:0.5f}%\n"
                                   "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
-                                  "- Bins of Most Commonly Incorrect Characters: {}\n"
-                                  "Average PSNR Greyscaling -> Bilateral Filtering : {:0.4f}\n"
-                                  "Average PSNR Bilateral Filtering -> Adaptive Histogram Equalisation : {:0.4f}\n"
-                                  "Average PSNR Adaptive Histogram Equalisation -> Adaptive Thresholding : {:0.4f}\n"
+                                  "- Bins of Most Commonly Incorrect Characters (Actual char was misread as .. ): {}\n"
+                                  "Average PSNR (Greyscale Input [ .. -> .. ] Thresholding Output : {:0.4f}\n"
                 .format(
                     limit,
                     end_time,
@@ -451,9 +447,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     limit,
                     incorrect_reg,
                     misread_chars_dict,
-                    avg_psnr_grey_vs_bilateral,
-                    avg_psnr_bilateral_vs_ahe,
-                    avg_psnr_ahe_vs_thresholding))
+                    avg_psnr))
 
                 f = open("anpr_results.txt", "w")
                 f.write(results_output)
