@@ -317,16 +317,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             if reg.upper() == file[:7]:
                 correct = correct + 1
                 for i in range(0, len(reg)):
-                    print(reg[i], " ", confidence[i])
                     if reg[i] in mean_confidence_dict:
                         mean_confidence_dict[reg[i]][1] += 1
                         mean_confidence_dict[reg[i]][0] += confidence[i]
                     else:
                         mean_confidence_dict[reg[i]] = [confidence[i], 1]
-
-                for key, arr in mean_confidence_dict.items():
-                    mean_confidence_dict[key] = arr[0] / arr[1]
-
 
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
@@ -401,6 +396,9 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             count = count + 1
             if count == limit:
                 # Results Metric - Most Commonly Incorrect Characters
+                for key, arr in mean_confidence_dict.items():
+                    mean_confidence_dict[key] = arr[0] / arr[1]
+
                 print("PRINTING MEAN CONFIDENCE\n", mean_confidence_dict)
                 misread_chars_dict = {}
                 # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
