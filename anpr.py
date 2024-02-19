@@ -324,7 +324,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             print("%s took %s seconds\n" % (file, time.time() - start_time))
             if reg.upper() == file[:7]:
                 correct += 1
-                calc_mean_confidence(mean_confidence_dict, reg, confidence)
             else:
                 incorrect_reg.append([reg.upper(), file[:7]])
                 actual_reg = file[:7].lower()
@@ -335,7 +334,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                         confidence[i] = confidence_distribution[i].get(actual_reg[i])
                         reg = reg[:i] + actual_reg[i] + reg[i+1:]
 
-                calc_mean_confidence(mean_confidence_dict, reg, confidence)
+            calc_mean_confidence(mean_confidence_dict, reg, confidence)
                 # todo: write top 5/10/15 results (based on confidence distribution) for incorrect guesses
 
             psnr_readings.append(cv2.PSNR(greyscale_img, th_img))
