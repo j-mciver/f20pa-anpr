@@ -7,7 +7,7 @@ import time
 from matplotlib import pyplot as plt
 import numpy as np
 
-from write_results import write_xml_file
+from write_results import write_to_xml_file, store_results
 
 # image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented"
 # image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"
@@ -39,6 +39,7 @@ def apply_bilateral_filter(img):
 # reference: bilateral filter algorithm https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 def iterative_bilateral_filter(img):
     return apply_bilateral_filter(img)
+
 
 """ Adaptive Histogram Equalisation
     - Improves the contrast of input image by locally examining regions of pixels, called neighbours, and distributes
@@ -338,6 +339,9 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
             process_time = time.time() - start_time
             print("%s took %s seconds\n" % (file, process_time))
+
+            # Contents of reg are updated, need to preserve old state for writing result to XML file
+            tmp_reg = reg.upper()
             if reg.upper() == file[:7]:
                 correct += 1
             else:
@@ -348,29 +352,56 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     # predicted does not equal actual character
                     if reg[i] != actual_reg[i]:
                         confidence[i] = confidence_distribution[i].get(actual_reg[i])
-                        reg = reg[:i] + actual_reg[i] + reg[i+1:]
+                        reg = reg[:i] + actual_reg[i] + reg[i + 1:]
 
             calc_mean_confidence(mean_confidence_dict, reg, confidence)
-                # todo: write top 5/10/15 results (based on confidence distribution) for incorrect guesses
+            # todo: write top 5/10/15 results (based on confidence distribution) for incorrect guesses
 
             psnr = cv2.PSNR(greyscale_img, th_img)
             psnr_readings.append(psnr)
+
             # todo: store incorrect template images (all ext chars and see confidence values)
             # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
-
-            # --- Write Results to XML File ---
+            # --- Pass data to write_results array ---
+            store_results([
+                file[:7],
+                tmp_reg,
+                tmp_reg == file[:7],
+                process_time,
+                confidence,
+                confidence_distribution,
+                psnr,
+                data_dict["angle"],
+                contrast_before_preprocessing,
+                contrast_after_preprocessing,
+                brightness,
+                brightness_category
+            ])
+            print("<registration_text>", file[:7], "</registration_text>")
+            print("<predicted_text>",reg.upper())
+            print("<is_correct>",reg.upper() == file[:7])
+            print("<process_time_sec>",process_time)
+            print("<max_confidence>",confidence)
+            print("<confidence_distribution>",confidence_distribution)
+            print("<psnr>",psnr)
+            print("<degree_of_tilt>",data_dict["angle"])
+            print("<contrast before>",contrast_before_preprocessing)
+            print("<contrast_after>",contrast_after_preprocessing)
+            print("<brightness",brightness)
+            print("<brightness_category>",brightness_category)
             # file[:7]
             # reg.upper()
             # reg.upper() == file[:7]:
             # process_time
-            # for con in confidence: print con
+            # for con in confidence: print con (join with commas / lambda it)
             # confidence_distribution (arr -> conf in confidence_distribution)
             # psnr
             # data_dict["angle"]
-            #
+            # contrast_before_preprocessing
+            # contrast_after_preprocessing
+            # brightness
+            # brightness category
 
-
-            # write_xml_file()
 
             """ --- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -p command line arg is provided (plot results enabled)
@@ -431,6 +462,9 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
             count = count + 1
             if count == limit:
+                # Write analytical metrics to XML file
+                write_to_xml_file()
+
                 # Results Metric - Most Commonly Incorrect Characters
                 for key, arr in mean_confidence_dict.items():
                     mean_confidence_dict[key] = arr[0] / arr[1]
@@ -505,6 +539,8 @@ def convert_bgr_rgb(img):
     
     Returns dictionary containing character/digit mapped to mean confidence
 """
+
+
 def calc_mean_confidence(dict, reg, confidence):
     for i in range(0, len(reg)):
         if reg[i] in dict:
