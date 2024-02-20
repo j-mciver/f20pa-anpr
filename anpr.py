@@ -36,13 +36,7 @@ def apply_bilateral_filter(img):
 
 # reference: bilateral filter algorithm https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 def iterative_bilateral_filter(img):
-    fimg = apply_bilateral_filter(img)
-    # psnr = cv2.PSNR(img, fimg)
-    # avg_psnr.append(psnr)
-    # data_dict["psnr"] = psnr
-    # print("PSNR: %s" % (psnr))
-    return fimg
-
+    return apply_bilateral_filter(img)
 
 """ Adaptive Histogram Equalisation
     - Improves the contrast of input image by locally examining regions of pixels, called neighbours, and distributes
@@ -131,6 +125,9 @@ def character_segmentation(th_img, s_1d):
             corrected_img = tilt_correction(th_img, component_mask)
         else:
             corrected_img = th_img
+            data_dict["uncorrected_tilt"] = corrected_img
+            data_dict["corrected_img"] = corrected_img
+            data_dict["angle"] = -0
         output = cv2.connectedComponentsWithStats(corrected_img, 4, cv2.CV_32S)
         (numLabels, labels, stats, centroids) = output
         char_img = np.zeros(corrected_img.shape, dtype="uint8")
@@ -303,6 +300,23 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             else:
                 th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
+            # Root Mean Square (RMS) Contrast
+            contrast_before_preprocessing = greyscale_img.std()
+            contrast_after_preprocessing = th_img.std()
+
+            # todo: assumption brightness categories thresholds are manually adjusted
+            brightness = greyscale_img.mean()
+            if brightness > 80:
+                brightness_category = "bright"
+            elif brightness < 50:
+                brightness_category = "dark"
+            else:
+                brightness_category = "normal"
+            print(brightness_category)
+
+            print("CONTRAST BEFORE, ", contrast_before_preprocessing)
+            print("CONTRAST AFTER, ", contrast_after_preprocessing)
+
             # Character Segmentation
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
             char_img, rect_border, characters = character_segmentation(th_img, s_1d)
@@ -341,9 +355,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             # todo: store incorrect template images (all ext chars and see confidence values)
             # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
 
-            """--- DISPLAY PROCESSED IMAGES --- 
+            """ --- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -p command line arg is provided (plot results enabled)
-                else, result metrics are pushed to display
             """
             plot_results = plot_results
             if plot_results:
@@ -468,13 +481,12 @@ def convert_bgr_rgb(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
 
-""" Calculates a running average of the maximum confidence for each template match.
+""" Calculates the mean confidence for each template match.
     This method calculates mean confidence on both positive and negative results, where the prediction was correct/incorrect.
+    Uses confidence[] list which stores the top match confidence result for every extracted character.
     
-    Returns dictionary containing character/digit and average confidence
+    Returns dictionary containing character/digit mapped to mean confidence
 """
-
-
 def calc_mean_confidence(dict, reg, confidence):
     for i in range(0, len(reg)):
         if reg[i] in dict:
@@ -602,3 +614,4 @@ cl_args_handler()
 # https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html (tilt correction based on affine transformation)
 # plot_results placing text boxes https://matplotlib.org/3.3.4/gallery/recipes/placing_text_boxes.html
 # sorting python dictionary by values: https://www.freecodecamp.org/news/sort-dictionary-by-value-in-python/
+# creating an xml file: https://docs.python.org/3/library/xml.etree.elementtree.html
