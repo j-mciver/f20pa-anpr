@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 global data
 data = []
 
-xml_dir = "xml_files/"
+xml_dir = "./xml_files/"
 
 
 def store_results(res):
@@ -86,7 +86,7 @@ def write_to_xml_file():
         brightness_category.text = entry[11]
 
     tree = ET.ElementTree(root)
-    tree.write(xml_dir + "1a_1b_1c_1d_yellowplate_12000_results.xml")
+    tree.write(xml_dir + "TEST_TEST.xml")
 
 # References:
 # Creating an XMl file using xml.etree: https://docs.python.org/3/library/xml.etree.elementtree.html

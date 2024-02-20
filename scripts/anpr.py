@@ -7,14 +7,9 @@ import time
 from matplotlib import pyplot as plt
 import numpy as np
 
-from write_results import write_to_xml_file, store_results
+from write_data import write_to_xml_file, store_results
 
-# image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented"
-# image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"
-# todo: image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
-# image_list = sorted(os.listdir(image_dir))
-
-templates_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/templates"
+templates_dir = "./templates"
 templates_list = sorted(os.listdir(templates_dir))
 
 """ Convert an input RGB image to greyscale
@@ -314,10 +309,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 brightness_category = "dark"
             else:
                 brightness_category = "normal"
-            print(brightness_category)
-
-            print("CONTRAST BEFORE, ", contrast_before_preprocessing)
-            print("CONTRAST AFTER, ", contrast_after_preprocessing)
 
             # Character Segmentation
             th_img = cv2.bitwise_not(th_img)  # invert binary img OpenCV CCA expects black background, white foreground
@@ -355,14 +346,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                         reg = reg[:i] + actual_reg[i] + reg[i + 1:]
 
             calc_mean_confidence(mean_confidence_dict, reg, confidence)
-            # todo: write top 5/10/15 results (based on confidence distribution) for incorrect guesses
 
             psnr = cv2.PSNR(greyscale_img, th_img)
             psnr_readings.append(psnr)
 
-            # todo: store incorrect template images (all ext chars and see confidence values)
-            # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
-            # --- Pass data to write_results array ---
+            # --- store data for write_data.py  ---
             store_results([
                 file[:7],
                 tmp_reg,
@@ -377,18 +365,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 brightness,
                 brightness_category
             ])
-            print("<registration_text>", file[:7], "</registration_text>")
-            print("<predicted_text>",reg.upper())
-            print("<is_correct>",reg.upper() == file[:7])
-            print("<process_time_sec>",process_time)
-            print("<max_confidence>",confidence)
-            print("<confidence_distribution>",confidence_distribution)
-            print("<psnr>",psnr)
-            print("<degree_of_tilt>",data_dict["angle"])
-            print("<contrast before>",contrast_before_preprocessing)
-            print("<contrast_after>",contrast_after_preprocessing)
-            print("<brightness",brightness)
-            print("<brightness_category>",brightness_category)
 
             """ --- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -p command line arg is provided (plot results enabled)
@@ -499,7 +475,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                     avg_psnr,
                     mean_confidence_dict))
 
-                f = open("anpr_results.txt", "w")
+                f = open("../anpr_results.txt", "w")
                 f.write(results_output)
                 f.close()
                 print(results_output)
