@@ -1,4 +1,5 @@
 import xml.etree.ElementTree as ET
+import uuid
 
 """"
     <registration_text> AA10QYN </registration_text>
@@ -30,6 +31,8 @@ import xml.etree.ElementTree as ET
 
 global data
 data = []
+
+xml_dir = "xml_files/"
 
 
 def store_results(res):
@@ -86,8 +89,7 @@ def write_to_xml_file():
         brightness_category.text = entry[11]
 
     tree = ET.ElementTree(root)
-    # todo make UUID and cpature last date + time.now() + UUID [:-4]
-    tree.write('xml_files/TEST.xml')
+    tree.write(xml_dir + str(uuid.uuid4())[:4] + ".xml")
 
 # References:
 # Creating an XMl file using xml.etree: https://docs.python.org/3/library/xml.etree.elementtree.html
