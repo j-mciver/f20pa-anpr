@@ -428,7 +428,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 # Write analytical metrics to XML file
                 write_to_xml_file()
 
-                # Results Metric - Most Commonly Incorrect Characters
                 for key, arr in mean_confidence_dict.items():
                     mean_confidence_dict[key] = arr[0] / arr[1]
                 mean_confidence_dict = sorted(mean_confidence_dict.items(), key=lambda x: x[1])
