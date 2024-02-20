@@ -7,6 +7,8 @@ import time
 from matplotlib import pyplot as plt
 import numpy as np
 
+from write_results import write_xml_file
+
 # image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented"
 # image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"
 # todo: image dir must not be hardcoded - make this an embedded project folder potentially on GitHub? + test yellow plates
@@ -121,13 +123,13 @@ def character_segmentation(th_img, s_1d):
     # check area and index
     if idx is not None and max > 0:
         component_mask = (labels == idx).astype("uint8") * 255
-        if s_1d:
-            corrected_img = tilt_correction(th_img, component_mask)
-        else:
+        corrected_img = tilt_correction(th_img, component_mask)
+
+        if not s_1d:
             corrected_img = th_img
             data_dict["uncorrected_tilt"] = corrected_img
             data_dict["corrected_img"] = corrected_img
-            data_dict["angle"] = -0
+
         output = cv2.connectedComponentsWithStats(corrected_img, 4, cv2.CV_32S)
         (numLabels, labels, stats, centroids) = output
         char_img = np.zeros(corrected_img.shape, dtype="uint8")
@@ -272,7 +274,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
     limit = limit
     count = 0
     for file in image_list:
-        print(file)
         start_time = time.time()
         if file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".jpg"):
             print("Processing {0}".format(file))
@@ -335,7 +336,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             if "O" in file:
                 file = file.replace("O", "0")
 
-            print("%s took %s seconds\n" % (file, time.time() - start_time))
+            process_time = time.time() - start_time
+            print("%s took %s seconds\n" % (file, process_time))
             if reg.upper() == file[:7]:
                 correct += 1
             else:
@@ -351,9 +353,24 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             calc_mean_confidence(mean_confidence_dict, reg, confidence)
                 # todo: write top 5/10/15 results (based on confidence distribution) for incorrect guesses
 
-            psnr_readings.append(cv2.PSNR(greyscale_img, th_img))
+            psnr = cv2.PSNR(greyscale_img, th_img)
+            psnr_readings.append(psnr)
             # todo: store incorrect template images (all ext chars and see confidence values)
             # todo: create dir with UUIDs last 4 digits + date and show exploded diagram of all values
+
+            # --- Write Results to XML File ---
+            # file[:7]
+            # reg.upper()
+            # reg.upper() == file[:7]:
+            # process_time
+            # for con in confidence: print con
+            # confidence_distribution (arr -> conf in confidence_distribution)
+            # psnr
+            # data_dict["angle"]
+            #
+
+
+            # write_xml_file()
 
             """ --- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -p command line arg is provided (plot results enabled)
@@ -433,6 +450,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                 misread_chars_dict[(reg[1][i], reg[0][i])] = 1
 
                 end_time = time.time() - begin_time
+
                 avg_processing_time = end_time / limit
                 avg_psnr = sum(psnr for psnr in psnr_readings) / limit
                 """
@@ -445,7 +463,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                                   "- Average Reading Accuracy: {:0.5f}%\n"
                                   "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
                                   "- Bins of Most Commonly Incorrect Characters (Actual char was misread as .. ): {}\n"
-                                  "Average PSNR (Greyscale Input <--> Preprocessed Image Output) : {:0.4f}\n"
+                                  "Average PSNR dB (Greyscale Input <--> Preprocessed Image Output) : {:0.4f}\n"
                                   "Mean Confidence Per Character: {}"
                 .format(
                     limit,
@@ -614,4 +632,3 @@ cl_args_handler()
 # https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html (tilt correction based on affine transformation)
 # plot_results placing text boxes https://matplotlib.org/3.3.4/gallery/recipes/placing_text_boxes.html
 # sorting python dictionary by values: https://www.freecodecamp.org/news/sort-dictionary-by-value-in-python/
-# creating an xml file: https://docs.python.org/3/library/xml.etree.elementtree.html
