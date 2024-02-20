@@ -44,7 +44,7 @@ def create_child_elements(data, parent):
         <brightness>155</brightness>
         <brightness_category> bright/normal/dark</brightness_category>
 """
-def write_to_xml_file():
+def write_to_xml_file(file_name):
     root = ET.Element('root')
     for entry in data:
         item = ET.SubElement(root, 'item')
@@ -86,7 +86,7 @@ def write_to_xml_file():
         brightness_category.text = entry[11]
 
     tree = ET.ElementTree(root)
-    tree.write(xml_dir + "TEST_TEST.xml")
+    tree.write(xml_dir + file_name)
 
 # References:
 # Creating an XMl file using xml.etree: https://docs.python.org/3/library/xml.etree.elementtree.html

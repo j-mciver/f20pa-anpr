@@ -48,13 +48,14 @@ def parse_xml(file_path):
 
     correct = 0
     incorrect_reg = []
-    limit = 1500
+    limit = 0
     total_processing_time = 0
     psnr = 0
 
     mean_confidence_dict = dict()
 
     for item in root:
+        limit += 1
         try:
             # reading accuracy
             if item.find("is_correct").text == "True":

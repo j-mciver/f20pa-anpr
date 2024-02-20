@@ -7,6 +7,7 @@ import time
 from matplotlib import pyplot as plt
 import numpy as np
 
+from scripts.graphs import parse_xml
 from write_data import write_to_xml_file, store_results
 
 templates_dir = "./templates"
@@ -409,7 +410,14 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             count = count + 1
             if count == limit:
                 # Write analytical metrics to XML file
-                write_to_xml_file()
+                xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
+                file = "test3.xml"
+                # store contents on disk
+                write_to_xml_file(file)
+
+
+                parse_xml(xml_dir + file)
+
                 break
 
 
