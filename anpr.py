@@ -389,19 +389,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             print("<contrast_after>",contrast_after_preprocessing)
             print("<brightness",brightness)
             print("<brightness_category>",brightness_category)
-            # file[:7]
-            # reg.upper()
-            # reg.upper() == file[:7]:
-            # process_time
-            # for con in confidence: print con (join with commas / lambda it)
-            # confidence_distribution (arr -> conf in confidence_distribution)
-            # psnr
-            # data_dict["angle"]
-            # contrast_before_preprocessing
-            # contrast_after_preprocessing
-            # brightness
-            # brightness category
-
 
             """ --- DISPLAY PROCESSED IMAGES --- 
                 Contents are only displayed if -p command line arg is provided (plot results enabled)
