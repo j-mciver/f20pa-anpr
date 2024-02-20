@@ -21,6 +21,11 @@ def calc_misread_chars_dict(incorrect_reg):
     return misread_chars_dict
 
 
+""" Calculates the mean confidence for each template match.
+    This method calculates mean confidence on both positive and negative results, where the prediction was correct/incorrect.
+    Uses confidence[] list which stores the top match confidence result for every extracted character.
+
+    Returns dictionary containing character/digit mapped to mean confidence """
 def calc_mean_confidence(dict, reg, confidence):
     if (len(reg) != len(confidence)):
         raise Exception("Error: Numbers of letters/digits does not match confidence array values.")
@@ -43,7 +48,7 @@ def parse_xml(file_path):
 
     correct = 0
     incorrect_reg = []
-    limit = 12000
+    limit = 1500
     total_processing_time = 0
     psnr = 0
 
@@ -92,4 +97,4 @@ def parse_xml(file_path):
     print("Mean Confidence per Character {}".format(mean_confidence_dict))
 
 
-parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/1a_1b_1c_1d_yellowplate_12000.xml")
+parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/TEST_TEST2.xml")

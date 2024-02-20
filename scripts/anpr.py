@@ -21,8 +21,6 @@ templates_list = sorted(os.listdir(templates_dir))
     Reference Usage: OpenCV Converting RGB images to Greyscale
         https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 """
-
-
 def convert_rgb_to_greyscale(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -44,8 +42,6 @@ def iterative_bilateral_filter(img):
     Reference: 
         https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
 """
-
-
 def adaptive_histogram_equalisation(img):
     ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
     return ahe.apply(img)
@@ -257,15 +253,8 @@ def template_match(extracted_char_templates):
 
 
 def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
-    begin_time = time.time()
-    correct = 0
-    incorrect_reg = []
     global data_dict
     data_dict = dict()
-    global psnr_readings
-    psnr_readings = []
-    global mean_confidence_dict
-    mean_confidence_dict = dict()
 
     limit = limit
     count = 0
@@ -333,10 +322,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
 
             # Contents of reg are updated, need to preserve old state for writing result to XML file
             tmp_reg = reg.upper()
-            if reg.upper() == file[:7]:
-                correct += 1
-            else:
-                incorrect_reg.append([reg.upper(), file[:7]])
+            if reg.upper() != file[:7]:
                 actual_reg = file[:7].lower()
                 # find the index(es) that were incorrect, update confidence array to reflect true prediction
                 for i in range(min(len(reg), len(actual_reg))):
@@ -345,10 +331,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                         confidence[i] = confidence_distribution[i].get(actual_reg[i])
                         reg = reg[:i] + actual_reg[i] + reg[i + 1:]
 
-            calc_mean_confidence(mean_confidence_dict, reg, confidence)
-
             psnr = cv2.PSNR(greyscale_img, th_img)
-            psnr_readings.append(psnr)
 
             # --- store data for write_data.py  ---
             store_results([
@@ -427,57 +410,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             if count == limit:
                 # Write analytical metrics to XML file
                 write_to_xml_file()
-
-                for key, arr in mean_confidence_dict.items():
-                    mean_confidence_dict[key] = arr[0] / arr[1]
-                mean_confidence_dict = sorted(mean_confidence_dict.items(), key=lambda x: x[1])
-
-                misread_chars_dict = {}
-                # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
-                for reg in incorrect_reg:
-                    for i in range(min(len(reg[0]), len(reg[1]))):
-                        # predicted does not equal actual character
-                        if reg[0][i] != reg[1][i]:
-                            # print("sys MISREAD character {} as a {}".format(reg[1][i], reg[0][i]))
-                            # update count if key exists
-                            if (reg[1][i], reg[0][i]) in misread_chars_dict:
-                                misread_chars_dict[(reg[1][i], reg[0][i])] += 1
-                            else:
-                                misread_chars_dict[(reg[1][i], reg[0][i])] = 1
-
-                end_time = time.time() - begin_time
-
-                avg_processing_time = end_time / limit
-                avg_psnr = sum(psnr for psnr in psnr_readings) / limit
-                """
-                    --- Result Metrics Output: ---
-                """
-                avg_reading_accuracy = (correct / limit) * 100
-                results_output = ("+----------------+\n| Results Output |\n+----------------+\n"
-                                  "Total time taken for {} inputs: {:0.5f} seconds\n"
-                                  "Average time taken to process each input: {:0.5f} seconds\n"
-                                  "- Average Reading Accuracy: {:0.5f}%\n"
-                                  "- Incorrect Registrations {:0.2f}% - {}/{} (Predicted, Actual): {}\n"
-                                  "- Bins of Most Commonly Incorrect Characters (Actual char was misread as .. ): {}\n"
-                                  "Average PSNR dB (Greyscale Input <--> Preprocessed Image Output) : {:0.4f}\n"
-                                  "Mean Confidence Per Character: {}"
-                .format(
-                    limit,
-                    end_time,
-                    avg_processing_time,
-                    avg_reading_accuracy,
-                    len(incorrect_reg) / limit,
-                    len(incorrect_reg),
-                    limit,
-                    incorrect_reg,
-                    misread_chars_dict,
-                    avg_psnr,
-                    mean_confidence_dict))
-
-                f = open("../anpr_results.txt", "w")
-                f.write(results_output)
-                f.close()
-                print(results_output)
                 break
 
 
@@ -493,23 +425,6 @@ def display_results(fig, rows, cols, index, data):
 
 def convert_bgr_rgb(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-
-""" Calculates the mean confidence for each template match.
-    This method calculates mean confidence on both positive and negative results, where the prediction was correct/incorrect.
-    Uses confidence[] list which stores the top match confidence result for every extracted character.
-    
-    Returns dictionary containing character/digit mapped to mean confidence
-"""
-
-
-def calc_mean_confidence(dict, reg, confidence):
-    for i in range(0, len(reg)):
-        if reg[i] in dict:
-            dict[reg[i]][1] += 1
-            dict[reg[i]][0] += confidence[i]
-        else:
-            dict[reg[i]] = [confidence[i], 1]
 
 
 def parse_stage_args(stages):
