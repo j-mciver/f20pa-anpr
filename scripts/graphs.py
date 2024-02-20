@@ -98,4 +98,4 @@ def parse_xml(file_path):
     print("Mean Confidence per Character {}".format(mean_confidence_dict))
 
 
-parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/TEST_TEST2.xml")
+# parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/TEST_TEST2.xml")

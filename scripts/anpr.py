@@ -22,6 +22,8 @@ templates_list = sorted(os.listdir(templates_dir))
     Reference Usage: OpenCV Converting RGB images to Greyscale
         https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
 """
+
+
 def convert_rgb_to_greyscale(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
@@ -43,6 +45,8 @@ def iterative_bilateral_filter(img):
     Reference: 
         https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
 """
+
+
 def adaptive_histogram_equalisation(img):
     ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
     return ahe.apply(img)
@@ -412,10 +416,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
                 # Write analytical metrics to XML file
                 xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
                 file = "test3.xml"
-                # store contents on disk
                 write_to_xml_file(file)
-
-
                 parse_xml(xml_dir + file)
 
                 break
