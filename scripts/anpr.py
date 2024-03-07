@@ -416,8 +416,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             if count == limit:
                 # Write analytical metrics to XML file
                 xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
-                file = file_name + "practice_test_inter_v1.xml"
-                print("FILE ",file)
+                file = file_name + "FILENAME_HERE.xml"
                 write_to_xml_file(file)
                 parse_xml(xml_dir + file)
                 break
@@ -538,8 +537,8 @@ def cl_args_handler():
 
         print("\nSTAGES enabled: ", stages)
 
-#     ["1a", "1b", "1c", "1d"],
 stage_permutations = [
+    ["1a", "1b", "1c", "1d"],
     ["1a", "1b", "1c"],
     ["1a", "1b", "1d"],
     ["1a", "1b"],
@@ -564,7 +563,7 @@ def iter_stage_permutations(stage_perms):
         s_1a, s_1b, s_1c, s_1d = call_preprocessing_pipeline(perm)
         image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"
         image_list = sorted(os.listdir("/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"))
-        start(image_list, image_dir, 1, s_1a, s_1b, s_1c, s_1d, True, file_name)
+        start(image_list, image_dir, 12000, s_1a, s_1b, s_1c, s_1d, False, file_name)
 
 # iter_stage_permutations(stage_permutations)
 
@@ -579,9 +578,9 @@ def parse_xml_files(dir):
                 res.write(output)
 
 
-# parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/whiteplate_safe_store")
+# parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/yellowplate_safe_store")
 
-# cl_args_handler()
+cl_args_handler()
 
 # REFERENCES
 # argparse usage https://docs.python.org/3/library/argparse.html
