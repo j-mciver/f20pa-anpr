@@ -9,6 +9,9 @@ xml_dir = "./xml_files/"
 def store_results(res):
     data.append(res)
 
+def clear_results():
+    data.clear()
+
 
 def create_child_elements(data, parent):
     i = 1
