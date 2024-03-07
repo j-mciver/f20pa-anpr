@@ -8,7 +8,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 from scripts.graphs import parse_xml
-from write_data import write_to_xml_file, store_results
+from write_data import write_to_xml_file, store_results, clear_results
 
 templates_dir = "./templates"
 templates_list = sorted(os.listdir(templates_dir))
@@ -257,9 +257,10 @@ def template_match(extracted_char_templates):
         1d :- Tilt Correction (Bilateral Transformation)"""
 
 
-def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
+def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, file_name):
     global data_dict
     data_dict = dict()
+    clear_results()
 
     limit = limit
     count = 0
@@ -415,10 +416,10 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results):
             if count == limit:
                 # Write analytical metrics to XML file
                 xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
-                file = "test3.xml"
+                file = file_name + "practice_test_inter_v1.xml"
+                print("FILE ",file)
                 write_to_xml_file(file)
                 parse_xml(xml_dir + file)
-
                 break
 
 
@@ -537,8 +538,50 @@ def cl_args_handler():
 
         print("\nSTAGES enabled: ", stages)
 
+#     ["1a", "1b", "1c", "1d"],
+stage_permutations = [
+    ["1a", "1b", "1c"],
+    ["1a", "1b", "1d"],
+    ["1a", "1b"],
+    ["1a", "1c", "1d"],
+    ["1a", "1c"],
+    ["1a", "1d"],
+    ["1a"],
+    ["1b", "1c", "1d"],
+    ["1b", "1c"],
+    ["1b", "1d"],
+    ["1b"],
+    ["1c", "1d"],
+    ["1c"],
+    ["1d"],
+    [""]
+]
 
-cl_args_handler()
+
+def iter_stage_permutations(stage_perms):
+    for perm in stage_perms:
+        file_name = "_".join(perm) + "_"
+        s_1a, s_1b, s_1c, s_1d = call_preprocessing_pipeline(perm)
+        image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"
+        image_list = sorted(os.listdir("/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"))
+        start(image_list, image_dir, 1, s_1a, s_1b, s_1c, s_1d, True, file_name)
+
+# iter_stage_permutations(stage_permutations)
+
+
+def parse_xml_files(dir):
+    xml_list = sorted(os.listdir(dir))
+    for xml_file in xml_list:
+        if xml_file.endswith(".xml"):
+            print("\n", xml_file)
+            output = parse_xml(dir + "/" + xml_file)
+            with open(xml_file[:-4] + "_output_results.txt", "w") as res:
+                res.write(output)
+
+
+# parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/whiteplate_safe_store")
+
+# cl_args_handler()
 
 # REFERENCES
 # argparse usage https://docs.python.org/3/library/argparse.html
