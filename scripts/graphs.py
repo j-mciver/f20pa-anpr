@@ -45,7 +45,6 @@ def calc_mean_confidence(dict, reg, confidence):
 
 
 def parse_xml(file_path):
-    print("+----------------+\n| Results Output |\n+----------------+\n Input File: ", file_path, "\n")
     tree = ET.parse(file_path)
     root = tree.getroot()
 
