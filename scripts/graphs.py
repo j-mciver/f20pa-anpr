@@ -12,7 +12,6 @@ def calc_misread_chars_dict(incorrect_reg):
         for i in range(min(len(reg[0]), len(reg[1]))):
             # predicted does not equal actual character
             if reg[0][i] != reg[1][i]:
-                # print("sys MISREAD character {} as a {}".format(reg[1][i], reg[0][i]))
                 # update count if key exists
                 if (reg[1][i], reg[0][i]) in misread_chars_dict:
                     misread_chars_dict[(reg[1][i], reg[0][i])] += 1
@@ -22,10 +21,12 @@ def calc_misread_chars_dict(incorrect_reg):
 
 
 """ Calculates the mean confidence for each template match.
-    This method calculates mean confidence on both positive and negative results, where the prediction was correct/incorrect.
+    Calculates mean confidence on both positive and negative results, where the prediction was correct or incorrect.
     Uses confidence[] list which stores the top match confidence result for every extracted character.
 
-    Returns dictionary containing character/digit mapped to mean confidence """
+    Returns: dictionary containing character/digit mapped to mean confidence """
+
+
 def calc_mean_confidence(dict, reg, confidence):
     if (len(reg) != len(confidence)):
         raise Exception("Error: Numbers of letters/digits does not match confidence array values.")
@@ -39,8 +40,10 @@ def calc_mean_confidence(dict, reg, confidence):
 
 
 """
-    Read only script which parses output XML files to generate results dataset and matplotlib graphs
+    Read only script which parses output XML files to generate results dataset
 """
+
+
 def parse_xml(file_path):
     print("+----------------+\n| Results Output |\n+----------------+\n Input File: ", file_path, "\n")
     tree = ET.parse(file_path)
@@ -88,14 +91,29 @@ def parse_xml(file_path):
 
     misread_chars = calc_misread_chars_dict(incorrect_reg)
     accuracy = (correct / limit) * 100
-    print("Accuracy: {:0.5f}%".format(accuracy))
-    print("Total processing time (sec): {:0.5f}".format(total_processing_time))
-    print("Avg processing time per input (sec) : {:0.5f}".format(total_processing_time / limit))
-    print("Error rate: {:0.5f}% | {}/{}".format((len(incorrect_reg) / limit) * 100, len(incorrect_reg), limit))
-    print("Incorrect Registrations (Predicted, Expected): {}".format(incorrect_reg))
-    print("Most Commonly Incorrect Characters (Actual character was misread as ... N times) | {}".format(misread_chars))
-    print("Average PSNR (dB) {:0.5f}".format(psnr / limit))
-    print("Mean Confidence per Character {}".format(mean_confidence_dict))
 
+    output_str = """+----------------+\n| Results Output |\n+----------------+\n Input File: {} \n
+    Accuracy: {:0.5f}%
+    Total processing time (sec): {:0.5f}
+    Avg processing time per input (sec) : {:0.5f}
+    Error rate: {:0.5f}% | {}/{}
+    Incorrect Registrations (Predicted, Expected): {}
+    Most Commonly Incorrect Characters (Actual character was misread as ... N times) | {}
+    Average PSNR (dB) {:0.5f}
+    Mean Confidence per Character {}
+    """.format(file_path,
+               accuracy,
+               total_processing_time,
+               total_processing_time / limit,
+               (len(incorrect_reg) / limit) * 100,
+               len(incorrect_reg),
+               limit,
+               incorrect_reg,
+               misread_chars,
+               psnr / limit,
+               mean_confidence_dict)
+
+    print(output_str)
+    return output_str
 
 # parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/TEST_TEST2.xml")
