@@ -11,6 +11,8 @@ Flags (table, mandatory, options, description)
 Output
 
 
-## Results
-`1a_1b_1c_1d_whiteplate_12000.xml` run using command line args: `-d "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented" -l 12000 -s "1a 1b 1c 1d" -p false`
-`1a_1b_1c_1d_yellowplate_12000.xml` run using command line args: `-d "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented" -l 12000 -s "1a 1b 1c 1d" -p false`
+## Example Usage
+`1a_1b_1c_1d_whiteplate_12000.xml` generated using command line args: `-d "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/whiteplate_augmented" -l 12000 -s "1a 1b 1c 1d" -p false`
+
+
+`1a_1b_1c_1d_yellowplate_12000.xml` generated using command line args: `-d "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented" -l 12000 -s "1a 1b 1c 1d" -p false`
