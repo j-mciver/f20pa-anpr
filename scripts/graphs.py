@@ -1,8 +1,47 @@
 import xml.etree.ElementTree as ET
 
-
 def convert_seconds_to_miliseconds(sec):
     return  # todo
+
+
+""" Calculates the reading accuracy of a match, grouped by degree of tilt.
+    Returns: (tilt degree, accuracy) """
+def calc_group_tilt_degree_by_accuracy(file_path):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+
+    res = []
+
+    for item in root:
+        try:
+            degree_of_tilt = item.find("degree_of_tilt").text
+            is_correct = item.find("is_correct").text
+            if is_correct == "True":
+                res.append((float(degree_of_tilt), 100))
+            else:
+                num_chars_correct = 7
+                reg = item.find("predicted_text").text
+                actual_reg = item.find("registration_text").text
+
+                # calculate the accuracy of the guess (how many chars were predicted correctly)
+                if len(reg) != 7:
+                    diff = len(actual_reg) - len(reg)
+                    num_chars_correct -= diff
+
+                for i in range(min(len(reg), len(actual_reg))):
+                    # predicted does not equal actual character
+                    if reg[i] != actual_reg[i]:
+                        num_chars_correct -= 1
+
+                res.append((float(degree_of_tilt), (num_chars_correct/7)*100))
+
+        except:
+            raise Exception(
+                "Error: Exception occured. Input file is either not an XML document, or the internal hierarchy is "
+                "invalid.")
+    for deg, acc in res:
+        print(deg, acc)
+
 
 
 def calc_misread_chars_dict(incorrect_reg):
