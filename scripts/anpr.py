@@ -7,7 +7,7 @@ import time
 from matplotlib import pyplot as plt
 import numpy as np
 
-from scripts.graphs import parse_xml
+from scripts.graphs import parse_xml, calc_group_tilt_degree_by_accuracy
 from write_data import write_to_xml_file, store_results, clear_results
 
 templates_dir = "./templates"
@@ -142,7 +142,6 @@ def character_segmentation(th_img, s_1d):
         for i, j in x_axis_sorted_components:
             text = "component {}/{}".format(j + 1, numLabels)
 
-            # print a status message update for the current connected component
             # print("[INFO] {}".format(text))
 
             x = stats[j, cv2.CC_STAT_LEFT]
@@ -199,9 +198,6 @@ def extract_characters(char_img, rect_border):
 
 # https://docs.opencv.org/3.4/d4/dc6/tutorial_py_template_matching.html
 def template_match(extracted_char_templates):
-    # All the 6 methods for comparison in a list
-    methods = ['cv2.TM_CCOEFF', 'cv2.TM_CCOEFF_NORMED', 'cv2.TM_CCORR',
-               'cv2.TM_CCORR_NORMED', 'cv2.TM_SQDIFF', 'cv2.TM_SQDIFF_NORMED']
     confidence = []
     confidence_distribution = []
     max_confidence = 0
@@ -257,7 +253,7 @@ def template_match(extracted_char_templates):
         1d :- Tilt Correction (Bilateral Transformation)"""
 
 
-def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, file_name):
+def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, file_name=""):
     global data_dict
     data_dict = dict()
     clear_results()
@@ -416,7 +412,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             if count == limit:
                 # Write analytical metrics to XML file
                 xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
-                file = file_name + "FILENAME_HERE.xml"
+                file = file_name + "test_test_test.xml"
                 write_to_xml_file(file)
                 parse_xml(xml_dir + file)
                 break
@@ -537,6 +533,7 @@ def cl_args_handler():
 
         print("\nSTAGES enabled: ", stages)
 
+
 stage_permutations = [
     ["1a", "1b", "1c", "1d"],
     ["1a", "1b", "1c"],
@@ -562,8 +559,10 @@ def iter_stage_permutations(stage_perms):
         file_name = "_".join(perm) + "_"
         s_1a, s_1b, s_1c, s_1d = call_preprocessing_pipeline(perm)
         image_dir = "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"
-        image_list = sorted(os.listdir("/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"))
+        image_list = sorted(os.listdir(
+            "/Users/jmciver/Documents/Y4S1/F20PA/DISSERTATION-MATERIAL/UKLicencePlateDataset/yellowplate_augmented"))
         start(image_list, image_dir, 12000, s_1a, s_1b, s_1c, s_1d, False, file_name)
+
 
 # iter_stage_permutations(stage_permutations)
 
@@ -574,11 +573,15 @@ def parse_xml_files(dir):
         if xml_file.endswith(".xml"):
             print("\n", xml_file)
             output = parse_xml(dir + "/" + xml_file)
+            print(output)
             with open(xml_file[:-4] + "_output_results.txt", "w") as res:
                 res.write(output)
 
 
-# parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/yellowplate_safe_store")
+# calc_group_tilt_degree_by_accuracy(
+#     "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/whiteplate_safe_store/1a_1b_1c_1d_whiteplate_12000.xml")
+
+# parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/whiteplate_safe_store")
 
 cl_args_handler()
 
