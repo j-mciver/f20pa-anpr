@@ -21,6 +21,8 @@ def calc_group_tilt_degree_by_accuracy(file_path):
             else:
                 num_chars_correct = 7
                 reg = item.find("predicted_text").text
+                if reg is None:
+                    reg = ""
                 actual_reg = item.find("registration_text").text
 
                 # calculate the accuracy of the guess (how many chars were predicted correctly)
@@ -40,7 +42,7 @@ def calc_group_tilt_degree_by_accuracy(file_path):
                 "Error: Exception occured. Input file is either not an XML document, or the internal hierarchy is "
                 "invalid.")
     for deg, acc in res:
-        print(deg, acc)
+        print('('+str(deg)+","+str(acc)+")")
 
 
 
