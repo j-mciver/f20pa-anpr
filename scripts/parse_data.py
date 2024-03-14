@@ -120,7 +120,7 @@ def parse_xml(file_path):
 
         except:
             raise Exception(
-                "Error: Exception occured. Input file is either not an XML document, or the internal hierarchy is "
+                "Error: Exception occurred. Input file is either not an XML document, or the internal hierarchy is "
                 "invalid.")
 
     for key, arr in mean_confidence_dict.items():
