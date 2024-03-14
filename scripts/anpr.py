@@ -7,7 +7,7 @@ import time
 from matplotlib import pyplot as plt
 import numpy as np
 
-from scripts.graphs import parse_xml, calc_group_tilt_degree_by_accuracy
+from scripts.parse_data import parse_xml, calc_group_tilt_degree_by_accuracy
 from write_data import write_to_xml_file, store_results, clear_results
 
 templates_dir = "./templates"
@@ -264,11 +264,9 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
         start_time = time.time()
         if file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".jpg"):
             print("Processing {0}".format(file))
-
             image_path = image_dir + "/" + file
             image = cv2.imread(image_path)
             greyscale_img = convert_rgb_to_greyscale(image)
-
             # apply iterative bilateral filter
             if s_1a:
                 filtered_image = iterative_bilateral_filter(greyscale_img)
@@ -282,7 +280,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             else:
                 ahe_img = filtered_image
 
-            # applying adaptative thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
+            # applying adaptive thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
             if s_1c:
                 th_img = adaptive_threshold(ahe_img)
             else:
@@ -332,6 +330,11 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
                     if reg[i] != actual_reg[i]:
                         confidence[i] = confidence_distribution[i].get(actual_reg[i])
                         reg = reg[:i] + actual_reg[i] + reg[i + 1:]
+
+            if reg == "":
+                print('failed to detect chars')
+
+
 
             psnr = cv2.PSNR(greyscale_img, th_img)
 
@@ -412,7 +415,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             if count == limit:
                 # Write analytical metrics to XML file
                 xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
-                file = file_name + "test_test_test.xml"
+                file = file_name + "TEST_TEST_12345.xml"
                 write_to_xml_file(file)
                 parse_xml(xml_dir + file)
                 break
@@ -579,7 +582,7 @@ def parse_xml_files(dir):
 
 
 # calc_group_tilt_degree_by_accuracy(
-#     "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/whiteplate_safe_store/1a_1b_1c_1d_whiteplate_12000.xml")
+#     "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/tc_enabled_tilt_variation_data.xml")
 
 # parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/whiteplate_safe_store")
 
