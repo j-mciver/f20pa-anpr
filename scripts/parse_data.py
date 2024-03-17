@@ -1,7 +1,65 @@
 import xml.etree.ElementTree as ET
 
-def convert_seconds_to_miliseconds(sec):
-    return  # todo
+def avg_contrast_before_and_after(file_path):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+
+    total = 0
+    avg_contrast_before = 0
+    avg_contrast_after = 0
+
+    for item in root:
+        try:
+            avg_contrast_before += float(item.find("contrast_before_preprocessing").text)
+            avg_contrast_after += float(item.find("contrast_after_preprocessing").text)
+            total += 1
+
+        except:
+            raise Exception(
+                "Error: Exception occured. Input file is either not an XML document, or the internal hierarchy is "
+                "invalid.")
+
+    avg_contrast_after /= 12000
+    avg_contrast_before /= 12000
+    print("avg contrast after", avg_contrast_after)
+    print('avg contrast before', avg_contrast_before)
+    if total != 12000:
+        raise Exception("Error: Invalid Total.")
+
+
+"""" Calculates bins for each category of contrast (brightness) by errors. 
+     Example: 100 errors: 75 low-brightness, 15 normal, 10 bright."""
+def composition_of_errors_by_contrast(file_path):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+
+    num_errors = 0
+    low = 0
+    normal = 0
+    bright = 0
+
+    for item in root:
+        try:
+            if item.find("is_correct").text == "False":
+                num_errors += 1
+                brightness = item.find("brightness_category").text
+                if brightness == "dark":
+                    low += 1
+                elif brightness == "normal":
+                    normal += 1
+                elif brightness == "bright":
+                    bright += 1
+
+
+        except:
+            raise Exception(
+                "Error: Exception occured. Input file is either not an XML document, or the internal hierarchy is "
+                "invalid.")
+
+    print("Number of Errors: "+str(num_errors))
+    print("Composition: low -", low, " | normal - ", normal, " | bright - ", bright)
+
+
 
 
 """ Calculates the reading accuracy of a match, grouped by degree of tilt.
@@ -156,4 +214,6 @@ def parse_xml(file_path):
     print(output_str)
     return output_str
 
-# parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/TEST_TEST2.xml")
+# parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1c_1d__v2.xml")
+# avg_contrast_before_and_after("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store"
+                                  # "/none__v2.xml")
