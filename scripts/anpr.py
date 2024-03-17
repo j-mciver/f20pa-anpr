@@ -288,7 +288,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
 
             # Root Mean Square (RMS) Contrast
             contrast_before_preprocessing = greyscale_img.std()
-            contrast_after_preprocessing = th_img.std()
+            contrast_after_preprocessing = ahe_img.std()
 
             # todo: assumption brightness categories thresholds are manually adjusted
             brightness = greyscale_img.mean()
@@ -333,8 +333,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
 
             if reg == "":
                 print('failed to detect chars')
-
-
 
             psnr = cv2.PSNR(greyscale_img, th_img)
 
@@ -415,7 +413,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             if count == limit:
                 # Write analytical metrics to XML file
                 xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
-                file = file_name + "TEST_TEST_12345.xml"
+                file = file_name + "wp_just_ahe.xml"
                 write_to_xml_file(file)
                 parse_xml(xml_dir + file)
                 break
@@ -576,18 +574,18 @@ def parse_xml_files(dir):
         if xml_file.endswith(".xml"):
             print("\n", xml_file)
             output = parse_xml(dir + "/" + xml_file)
-            print(output)
-            with open(xml_file[:-4] + "_output_results.txt", "w") as res:
-                res.write(output)
+            # print(output)
+            # with open(xml_file[:-4] + "_output_results.txt", "w") as res:
+            #     res.write(output)
 
 
 # calc_group_tilt_degree_by_accuracy(
 #     "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/tc_enabled_tilt_variation_data.xml")
 
-# parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/whiteplate_safe_store")
+# parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_yellowplate_safe_store")
 
 cl_args_handler()
-
+#
 # REFERENCES
 # argparse usage https://docs.python.org/3/library/argparse.html
 # https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
