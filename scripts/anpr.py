@@ -286,7 +286,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             else:
                 th_val, th_img = cv2.threshold(ahe_img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
-            # Root Mean Square (RMS) Contrast
             contrast_before_preprocessing = greyscale_img.std()
             contrast_after_preprocessing = ahe_img.std()
 
@@ -413,7 +412,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             if count == limit:
                 # Write analytical metrics to XML file
                 xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
-                file = file_name + "wp_just_ahe.xml"
+                file = file_name + "t4_v10_test.xml"
                 write_to_xml_file(file)
                 parse_xml(xml_dir + file)
                 break
