@@ -1,5 +1,27 @@
 import xml.etree.ElementTree as ET
 
+import numpy as np
+
+
+def psnr_range(file_path):
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+
+    list_psnr = []
+    for item in root:
+        try:
+            list_psnr.append(float(item.find("psnr").text))
+        except:
+            raise Exception(
+                "Error: Exception occured. Input file is either not an XML document, or the internal hierarchy is "
+                "invalid.")
+    list_psnr = sorted(list_psnr)
+    psnr = np.array(list_psnr)
+    print("sd ", psnr.std())
+    print("avg ", psnr.mean())
+    print("range ", list_psnr[-1], " to ", list_psnr[0])
+
+
 def avg_contrast_before_and_after(file_path):
     tree = ET.parse(file_path)
     root = tree.getroot()
@@ -10,6 +32,10 @@ def avg_contrast_before_and_after(file_path):
 
     for item in root:
         try:
+            if item.find("registration_text").text == "AB05WKZ":
+                print(item.find("registration_text").text)
+                print("before sd abo5wkz ", str(item.find("contrast_before_preprocessing").text))
+                print("after sd ", str(item.find("contrast_after_preprocessing").text))
             avg_contrast_before += float(item.find("contrast_before_preprocessing").text)
             avg_contrast_after += float(item.find("contrast_after_preprocessing").text)
             total += 1
@@ -29,6 +55,8 @@ def avg_contrast_before_and_after(file_path):
 
 """" Calculates bins for each category of contrast (brightness) by errors. 
      Example: 100 errors: 75 low-brightness, 15 normal, 10 bright."""
+
+
 def composition_of_errors_by_contrast(file_path):
     tree = ET.parse(file_path)
     root = tree.getroot()
@@ -56,14 +84,14 @@ def composition_of_errors_by_contrast(file_path):
                 "Error: Exception occured. Input file is either not an XML document, or the internal hierarchy is "
                 "invalid.")
 
-    print("Number of Errors: "+str(num_errors))
+    print("Number of Errors: " + str(num_errors))
     print("Composition: low -", low, " | normal - ", normal, " | bright - ", bright)
-
-
 
 
 """ Calculates the reading accuracy of a match, grouped by degree of tilt.
     Returns: (tilt degree, accuracy) """
+
+
 def calc_group_tilt_degree_by_accuracy(file_path):
     tree = ET.parse(file_path)
     root = tree.getroot()
@@ -93,15 +121,14 @@ def calc_group_tilt_degree_by_accuracy(file_path):
                     if reg[i] != actual_reg[i]:
                         num_chars_correct -= 1
 
-                res.append((float(degree_of_tilt), (num_chars_correct/7)*100))
+                res.append((float(degree_of_tilt), (num_chars_correct / 7) * 100))
 
         except:
             raise Exception(
                 "Error: Exception occured. Input file is either not an XML document, or the internal hierarchy is "
                 "invalid.")
     for deg, acc in res:
-        print('('+str(deg)+","+str(acc)+")")
-
+        print('(' + str(deg) + "," + str(acc) + ")")
 
 
 def calc_misread_chars_dict(incorrect_reg):
@@ -214,6 +241,5 @@ def parse_xml(file_path):
     print(output_str)
     return output_str
 
-# parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1c_1d__v2.xml")
-# avg_contrast_before_and_after("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store"
-                                  # "/none__v2.xml")
+# parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a__v2.xml")
+psnr_range("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1c__v2.xml")
