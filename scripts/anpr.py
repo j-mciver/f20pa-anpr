@@ -33,7 +33,7 @@ def apply_bilateral_filter(img):
 
 
 # reference: bilateral filter algorithm https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
-def iterative_bilateral_filter(img):
+def bilateral_filter(img):
     return apply_bilateral_filter(img)
 
 
@@ -60,7 +60,7 @@ def tilt_correction(th_img, component_mask):
     # reference: rotated rectangle: https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
 
     # 1 = cv2.RETR_EXTERNAL (exclude nested/internal contours)
-    # 2 = cv2.CHAIN_APPROX_SIMPLE we want diagonal lines
+    # 2 = cv2.CHAIN_APPROX_SIMPLE want diagonal lines
     contours, _ = cv2.findContours(component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     number_plate = cv2.minAreaRect(contours[0])
     box = cv2.boxPoints(number_plate)
@@ -139,6 +139,9 @@ def character_segmentation(th_img, s_1d):
 
         list.sort(x_axis_sorted_components)
 
+        """
+            Filtering of Connected Components Ref:
+        """
         for i, j in x_axis_sorted_components:
             text = "component {}/{}".format(j + 1, numLabels)
 
@@ -262,6 +265,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
     count = 0
     for file in image_list:
         start_time = time.time()
+
         if file.endswith(".png") or file.endswith(".jpeg") or file.endswith(".jpg"):
             print("Processing {0}".format(file))
             image_path = image_dir + "/" + file
@@ -289,7 +293,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             contrast_before_preprocessing = greyscale_img.std()
             contrast_after_preprocessing = ahe_img.std()
 
-            # todo: assumption brightness categories thresholds are manually adjusted
+            # todo: Assumption: brightness categories thresholds are manually adjusted
             brightness = greyscale_img.mean()
             if brightness > 80:
                 brightness_category = "bright"
@@ -412,7 +416,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             if count == limit:
                 # Write analytical metrics to XML file
                 xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
-                file = file_name + "t4_v10_test.xml"
+                file = file_name + "v_11_test_all.xml"
                 write_to_xml_file(file)
                 parse_xml(xml_dir + file)
                 break
