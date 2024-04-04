@@ -130,7 +130,26 @@ def calc_group_tilt_degree_by_accuracy(file_path):
     for deg, acc in res:
         print('(' + str(deg) + "," + str(acc) + ")")
 
+""" Repurpose calc_misread_chars_dict to grab the entire count of some character being misread.
+"""
+def calc_count_misreads(incorrect_reg):
+    misread_chars_dict = {}
+    for reg in incorrect_reg:
+        for i in range(min(len(reg[0]), len(reg[1]))):
+            # predicted does not equal actual character
+            if reg[0][i] != reg[1][i]:
+                # update count if key exists
+                if reg[1][i] in misread_chars_dict:
+                    misread_chars_dict[reg[1][i]] += 1
+                else:
+                    misread_chars_dict[reg[1][i]] = 1
+    return misread_chars_dict
 
+
+
+""" Return dictionary containing the intended character, and what is was misread as -> mapped to : 
+    the amount of occurences this misread for that specific character has happened
+"""
 def calc_misread_chars_dict(incorrect_reg):
     misread_chars_dict = {}
     # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
@@ -242,4 +261,4 @@ def parse_xml(file_path):
     return output_str
 
 # parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a__v2.xml")
-psnr_range("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1c__v2.xml")
+parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1b_1c_1d__v2.xml")
