@@ -273,7 +273,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             greyscale_img = convert_rgb_to_greyscale(image)
             # apply iterative bilateral filter
             if s_1a:
-                filtered_image = iterative_bilateral_filter(greyscale_img)
+                filtered_image = bilateral_filter(greyscale_img)
             else:
                 filtered_image = greyscale_img
 
