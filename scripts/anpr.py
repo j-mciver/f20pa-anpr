@@ -257,7 +257,7 @@ def template_match(extracted_char_templates):
         1a :- Noise Removal (Bilateral Filtering)
         1b :- Improving Contrast (Adaptive Histogram Equalisation)
         1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding (off)
-        1d :- Tilt Correction (Bilateral Transformation)"""
+        1d :- Tilt Correction"""
 def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, file_name=""):
     global data_dict
     data_dict = dict()
@@ -492,8 +492,8 @@ def cl_args_handler():
                             help="Specify the pre-processing pipeline stages which should be run against the dataset."
                                  "\n1a :- Noise Removal (Bilateral Filtering)"
                                  "\n1b :- Improving Contrast (Adaptive Histogram Equalisation)"
-                                 "\n1c :- Noise Removal (Adaptive Thresholding) (on) | Default: Otsu's Thresholding"
-                                 "\n1d :- Tilt Correction (Bilateral Transformation)", required=True)
+                                 "\n1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding"
+                                 "\n1d :- Tilt Correction", required=True)
         parser.add_argument('-p', type=str, help="Plot and display the results of each pipeline processing"
                                                  " stage. By default this will write result data to a directory",
                             required=False)
