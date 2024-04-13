@@ -46,6 +46,10 @@ def create_child_elements(data, parent):
         <contrast_after_preprocessing>90</contrast_after_preprocessing>
         <brightness>155</brightness>
         <brightness_category> bright/normal/dark</brightness_category>
+        
+        
+        References:
+        Creating an XMl file using xml.etree: https://docs.python.org/3/library/xml.etree.elementtree.html
 """
 def write_to_xml_file(file_name):
     root = ET.Element('root')
@@ -90,6 +94,3 @@ def write_to_xml_file(file_name):
 
     tree = ET.ElementTree(root)
     tree.write(xml_dir + file_name)
-
-# References:
-# Creating an XMl file using xml.etree: https://docs.python.org/3/library/xml.etree.elementtree.html
