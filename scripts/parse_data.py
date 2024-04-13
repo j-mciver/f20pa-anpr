@@ -130,8 +130,11 @@ def calc_group_tilt_degree_by_accuracy(file_path):
     for deg, acc in res:
         print('(' + str(deg) + "," + str(acc) + ")")
 
+
 """ Repurpose calc_misread_chars_dict to grab the entire count of some character being misread.
 """
+
+
 def calc_count_misreads(incorrect_reg):
     misread_chars_dict = {}
     for reg in incorrect_reg:
@@ -146,10 +149,11 @@ def calc_count_misreads(incorrect_reg):
     return misread_chars_dict
 
 
-
 """ Return dictionary containing the intended character, and what is was misread as -> mapped to : 
     the amount of occurences this misread for that specific character has happened
 """
+
+
 def calc_misread_chars_dict(incorrect_reg):
     misread_chars_dict = {}
     # todo: ASSUMPTION plates will only consist of 7 characters (UK standard, does not include private/dateless)
@@ -182,6 +186,58 @@ def calc_mean_confidence(dict, reg, confidence):
             dict[reg[i]][0] += confidence[i]
         else:
             dict[reg[i]] = [confidence[i], 1]
+
+
+""" Calculates the accuracy proximity of a processed image. How close was the guess (in proximity) of being correct.
+    
+    Returns highest maximum confidence (of matched template) and confidence distribution across all templates of
+    incorrect guess
+"""
+
+
+def query_accuracy_proximity(file_path):
+    # for every item, grab all incorrect guesses
+    # sum max confidence values, add this to dictionary mapped to registration and the confidence distribution for each character
+    tree = ET.parse(file_path)
+    root = tree.getroot()
+
+    shared_incorrect_reg_set = ["YS51UYH", "XT90HGJ", "AT33HC1"]
+
+    max_confidence = dict()
+    for item in root:
+        try:
+            if item.find("is_correct").text == "False" and item.find(
+                        "registration_text").text in shared_incorrect_reg_set:
+
+                sum_confidence = 0
+                confidence_distribution = []
+                max_conf_values = []
+                i = 0
+                for con in item.find("max_confidence"):
+                    sum_confidence += float(con.text)
+                    max_conf_values.append([item.find("predicted_text").text[i], con.text])
+                    i += 1
+
+                for char in item.find("confidence_distribution"):
+                    confidence_distribution.append(char.text)
+
+
+                max_confidence[item.find("registration_text").text] = [item.find("predicted_text").text, sum_confidence, max_conf_values, confidence_distribution]
+
+
+        except:
+            raise Exception(
+                "Error: Exception occurred. Input file is either not an XML document, or the internal hierarchy is "
+                "invalid.")
+
+    max_confidence = dict(reversed(sorted(max_confidence.items(), key=lambda con: con[1])))
+    i = 0
+    for key, value in max_confidence.items():
+        if i > 4:
+            break
+        print(key, value)
+        i += 1
+    print(max_confidence," \n")
 
 
 """
@@ -260,5 +316,14 @@ def parse_xml(file_path):
     print(output_str)
     return output_str
 
-# parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a__v2.xml")
-parse_xml("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1b_1c_1d__v2.xml")
+
+accuracy_proximity_file_paths = [
+    "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1b_1c_1d__v2.xml",
+    "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1b_1c__v2.xml",
+    "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1b_1d__v2.xml",
+    "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1c_1d__v2.xml",
+    "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1b_1c_1d__v2.xml",
+]
+
+# for path in accuracy_proximity_file_paths:
+#     query_accuracy_proximity(path)
