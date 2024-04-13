@@ -1,6 +1,6 @@
 # f20pa-anpr
 
-Python and OpenCV solution to implement a standard ANPR solution, consisting of pipeline stages: image-preprocessing, 
+Python and OpenCV solution to implement a standard ANPR solution, consisting of pipeline stages: image pre-processing, 
 number plate extraction, character segmentation and character recognition.
 predicted match. The main investigatory aim of this project is to assess the effectiveness of image
 pre-processing Techniques in improving ANPR reading accuracy
