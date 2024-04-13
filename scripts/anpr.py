@@ -17,45 +17,56 @@ templates_list = sorted(os.listdir(templates_dir))
     
     Attributes
     -----------
-        - img : Input RGB image to be converted to greyscale
+        - img : Input BGR image to be converted to greyscale
     
     Reference Usage: OpenCV Converting RGB images to Greyscale
         https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
+        https://docs.opencv.org/3.4/de/d25/imgproc_color_conversions.html (BGR2GRAY)
 """
-
-
 def convert_rgb_to_greyscale(img):
     return cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
+""" Apply bilateral filtering on input greyscale image
 
+    Reference Usage: https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
+
+"""
 def apply_bilateral_filter(img):
     return cv2.bilateralFilter(img, 7, 75, 75)
 
 
-# reference: bilateral filter algorithm https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
 def bilateral_filter(img):
     return apply_bilateral_filter(img)
 
 
 """ Adaptive Histogram Equalisation
-    - Improves the contrast of input image by locally examining regions of pixels, called neighbours, and distributes
-    illumination/contrast by applying weighted value based on examined pixels. Assess the two peaks (low and
-    high contrast).
+    - Improves the contrast of (up to some limit) input image by locally examining regions of pixels, called neighbours,
+     and distributes illumination/contrast by applying weighted value based on examined pixels. Assess the two peaks 
+    (low and high contrast).
     
-    Reference: 
+    References: 
         https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
+        https://docs.opencv.org/4.x/d5/daf/tutorial_py_histogram_equalization.html
 """
-
-
 def adaptive_histogram_equalisation(img):
     ahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(16, 16))
     return ahe.apply(img)
 
 
+""" Applying Adaptive (Gaussian) Thresholding to Input Greyscale Image
+    Returns: Thresholded Binary Image
+    
+    References: https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
+"""
 def adaptive_threshold(img):
     return cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 9, 2)
 
-
+""" Correct the tilt of input number plate
+    
+    References (cv2.minAreaRect + boundary box points): https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
+    cv2.findContours: https://docs.opencv.org/4.x/d4/d73/tutorial_py_contours_begin.html
+    cv2.warpAffine + cv2.getRotationMatrix2D:  https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html
+"""
 def tilt_correction(th_img, component_mask):
     # reference: rotated rectangle: https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
 
@@ -93,14 +104,17 @@ def tilt_correction(th_img, component_mask):
     return corrected_img
 
 
+""" Identify all connected components of an input image, filter this list and return the characters.
+
+    References: https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
+"""
 def character_segmentation(th_img, s_1d):
-    # Reference: Connected-Component Analysis (https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/)
     output = cv2.connectedComponentsWithStats(th_img, 4, cv2.CV_32S)
     (numLabels, labels, stats, centroids) = output
     characters = []
     rect_border = []
 
-    # sort components to appear based x-axis order (sorted on character, left to right)
+    # sort components to appear based x-axis order (sorted on component position, left to right)
     x_axis_sorted_components = list()
     for i in range(1, numLabels):
         x = stats[i, cv2.CC_STAT_LEFT]
@@ -139,41 +153,25 @@ def character_segmentation(th_img, s_1d):
 
         list.sort(x_axis_sorted_components)
 
-        """
-            Filtering of Connected Components Ref:
-        """
         for i, j in x_axis_sorted_components:
-            text = "component {}/{}".format(j + 1, numLabels)
-
-            # print("[INFO] {}".format(text))
-
             x = stats[j, cv2.CC_STAT_LEFT]
             y = stats[j, cv2.CC_STAT_TOP]
             w = stats[j, cv2.CC_STAT_WIDTH]
             h = stats[j, cv2.CC_STAT_HEIGHT]
             area = stats[j, cv2.CC_STAT_AREA]
-            # print("LABEL {}/{} stats: w = {}, h = {}, area = {}".format(j + 1, numLabels, w, h, area))
 
             # filter connected components by width, height and area of pixels
             if all((5 < w < 50, 40 < h < 65, 290 < area < 1200)):
-                # output = cv2.cvtColor(corrected_img, cv2.COLOR_GRAY2RGB)
-                # cv2.rectangle(output, (x, y), (x + w, y + h), (0, 255, 0), 3)
-
-                # print("Keeping component {}".format(text))
                 component_mask = (labels == j).astype("uint8") * 255
                 characters.append(component_mask)
                 rect_border.append([x, y, w, h])
                 char_img = cv2.bitwise_or(char_img, component_mask)
 
-                # cv2.imshow("Output", output)
-                # cv2.waitKey(0)
-
     else:
         raise Exception("Error: Plate not found.")
 
-    # domain knowledge (remove the distinguishing sign - will leafmost by X coordinate)
-    # todo: ASSUMPTION - plates are in standard format that consists of 7 characters/digits only. dateless/private NPs
-    # not included within project scope
+    # Eviction process (domain knowledge assumption) - number of characters must be exactly 7, remove erroneous
+    # components that were segmented as characters.
     while len(characters) > 7:
         rect_border.pop(0)
         characters.pop(0)
@@ -193,13 +191,18 @@ def extract_characters(char_img, rect_border):
         # resize to template to suitable width and height (30, 60)
         ext_char = cv2.resize(ext_char, (30, 60), cv2.INTER_LINEAR)
 
-        # ext_char = cv2.cvtColor(ext_char, cv2.COLOR_RGB2GRAY)
         extracted_char_templates.append(ext_char)
 
     return extracted_char_templates
 
 
-# https://docs.opencv.org/3.4/d4/dc6/tutorial_py_template_matching.html
+""" Character Recognition - Template Matching
+    Compare 34 templates (in /templates dir) to extracted character
+    
+    Returns: best template match confidence on predicted similarity
+    
+    Reference: https://docs.opencv.org/3.4/d4/dc6/tutorial_py_template_matching.html
+"""
 def template_match(extracted_char_templates):
     confidence = []
     confidence_distribution = []
@@ -229,12 +232,13 @@ def template_match(extracted_char_templates):
                 best_guess_char = template[0]
 
         print("MAX CONFIDENCE: ", max_confidence, " CHAR = ", best_guess_char)
-        # todo: EXTREMELY HIGH DOMAIN LEVEL KNOWLEDGE ASSUMPTION - testing has shown that very poor confidence is most likely a 1 due to issues with extracting and comparing one as a char
         if max_confidence < 0.30:
             best_guess_char = '1'
         reg += best_guess_char
         confidence.append(max_confidence)
 
+        # Reference (sorting python dictionary (k, v) by value):
+        # https://www.freecodecamp.org/news/sort-dictionary-by-value-in-python/
         tmp_dict = dict(reversed(sorted(tmp_dict.items(), key=lambda con: con[1])))
         confidence_distribution.append(tmp_dict)
 
@@ -254,8 +258,6 @@ def template_match(extracted_char_templates):
         1b :- Improving Contrast (Adaptive Histogram Equalisation)
         1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding (off)
         1d :- Tilt Correction (Bilateral Transformation)"""
-
-
 def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, file_name=""):
     global data_dict
     data_dict = dict()
@@ -271,20 +273,19 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             image_path = image_dir + "/" + file
             image = cv2.imread(image_path)
             greyscale_img = convert_rgb_to_greyscale(image)
-            # apply iterative bilateral filter
+
+            # apply bilateral filter
             if s_1a:
                 filtered_image = bilateral_filter(greyscale_img)
             else:
                 filtered_image = greyscale_img
 
-            # adaptative histogram equalisation
-            # AHE reference: https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
+            # adaptive histogram equalisation
             if s_1b:
                 ahe_img = adaptive_histogram_equalisation(filtered_image)
             else:
                 ahe_img = filtered_image
 
-            # applying adaptive thresholding https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
             if s_1c:
                 th_img = adaptive_threshold(ahe_img)
             else:
@@ -293,7 +294,6 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             contrast_before_preprocessing = greyscale_img.std()
             contrast_after_preprocessing = ahe_img.std()
 
-            # todo: Assumption: brightness categories thresholds are manually adjusted
             brightness = greyscale_img.mean()
             if brightness > 80:
                 brightness_category = "bright"
@@ -312,9 +312,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             # Template Matching
             reg, confidence, confidence_distribution = template_match(ext_char_templates)
 
-            # Number Plate Assumption: (A1) The letter 'I'/'i' does not appear in NPs, only 1. (REF Gov Standards)
-            # A2: The letter 'O' and number '0' are equivalent (REF Gov Standard)
-            # Equivalent Character Assumptions (todo: domain knowledge assumption)
+            # Number Plate Assumption: The letters "I" and "O" are syntactically equivalent to numbers "1" and "0"
+            # Equivalent Character Assumptions
             if "I" in file:
                 file = file.replace("I", "1")
             if "O" in file:
@@ -373,7 +372,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
                 corrected_tilt_img = convert_bgr_rgb(data_dict["corrected_img"])
                 cca_output = corrected_tilt_img.copy()
 
-                # reference: drawing around component border
+                # Reference: drawing around component border
                 # https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
                 for r in rect_border:
                     # (x, y), (x + w, y + h)
@@ -384,7 +383,7 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
                 fig = plt.figure(figsize=(16, 8))
                 display_results(fig, 3, 3, 2, [[image, "Input Image " + file]])
 
-                # noise removal stage data
+                # Noise removal stage data
                 noise_removal_data = [[greyscale_img, "Greyscaled Input RGB Image"],
                                       [filtered_image, "Bilateral Filtered Image"],
                                       [ahe_img, "Adaptive Histogram Equalisation"],
@@ -415,8 +414,8 @@ def start(image_list, image_dir, limit, s_1a, s_1b, s_1c, s_1d, plot_results, fi
             count = count + 1
             if count == limit:
                 # Write analytical metrics to XML file
-                xml_dir = "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/"
-                file = file_name + "v_11_test_all.xml"
+                xml_dir = "xml_files/"
+                file = file_name + "XML_FILENAME_HERE.xml"
                 write_to_xml_file(file)
                 parse_xml(xml_dir + file)
                 break
@@ -481,7 +480,7 @@ def call_preprocessing_pipeline(stages):
     return s_1a, s_1b, s_1c, s_1d
 
 
-# reference: argparse usage https://docs.python.org/3/library/argparse.html
+# Reference: argparse usage https://docs.python.org/3/library/argparse.html
 def cl_args_handler():
     if len(sys.argv) > 1:
         parser = argparse.ArgumentParser()
@@ -557,7 +556,7 @@ stage_permutations = [
     [""]
 ]
 
-
+# Helper method to iterate through all possible configurations of enabling and disabling pre-processing techniques
 def iter_stage_permutations(stage_perms):
     for perm in stage_perms:
         file_name = "_".join(perm) + "_"
@@ -570,25 +569,20 @@ def iter_stage_permutations(stage_perms):
 
 # iter_stage_permutations(stage_permutations)
 
-
+# Helper method to write 'output' summary results to .txt file.
 def parse_xml_files(dir):
     xml_list = sorted(os.listdir(dir))
     for xml_file in xml_list:
         if xml_file.endswith(".xml"):
             print("\n", xml_file)
             output = parse_xml(dir + "/" + xml_file)
-            # print(output)
-            # with open(xml_file[:-4] + "_output_results.txt", "w") as res:
-            #     res.write(output)
+            print(output)
+            with open(xml_file[:-4] + "_output_results.txt", "w") as res:
+                res.write(output)
 
-
-# calc_group_tilt_degree_by_accuracy(
-#     "/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/tc_enabled_tilt_variation_data.xml")
-
-# parse_xml_files("/Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_yellowplate_safe_store")
 
 cl_args_handler()
-#
+
 # REFERENCES
 # argparse usage https://docs.python.org/3/library/argparse.html
 # https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
