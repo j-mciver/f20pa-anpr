@@ -33,8 +33,8 @@ optional arguments:
               against the dataset. 1a :- Noise Removal (Bilateral Filtering)
               
               1b :- Improving Contrast (Adaptive Histogram Equalisation) 1c :-
-              Noise Removal (Adaptive Thresholding) (on) | Default: Otsu's
-              Thresholding 1d :- Tilt Correction (Bilateral Transformation)
+              Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's
+              Thresholding 1d :- Tilt Correction
               
   -p P        Plot and display the results of each pipeline processing stage.
               By default this will write result data to a directory
