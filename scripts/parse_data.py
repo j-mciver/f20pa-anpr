@@ -242,6 +242,8 @@ def query_accuracy_proximity(file_path):
 
 """
     Read only script which parses output XML files to generate results dataset
+    
+    Reference: https://docs.python.org/3/library/xml.etree.elementtree.html
 """
 
 

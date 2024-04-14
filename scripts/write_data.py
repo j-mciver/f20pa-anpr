@@ -38,7 +38,7 @@ def create_child_elements(data, parent):
         <confidence_distribution>
             <c1>a:90,c:90,d:89,84..</c1>
             <c2>a:90,z:29,c:8 ..</c2>
-            .. 7 items * 35 matches in dictionary
+            .. 7 items * 34 templates in dictionary
         </confidence_distribution>
         <psnr>7.613</psnr>
         <degree_of_tilt>3.6</degree_of_tilt>
