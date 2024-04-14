@@ -5,9 +5,10 @@ number plate extraction, character segmentation and character recognition.
 predicted match. The main investigatory aim of this project is to assess the effectiveness of image
 pre-processing Techniques in improving ANPR reading accuracy.
 
-Note, this project is optimised and constructed to process a specific set of computer generated input number plate images.
+Note, this project only provides support for a specific computer-generated dataset (linked below).
+Methods are optimised to process the images from `UKLicensePlateData`.
 Significant efforts would be required in refactoring parameters of OpenCV methods for this system
-to work on other sets input images. 
+to work on other sets of input images. 
 
 Input dataset can downloaded from [here](https://www.kaggle.com/datasets/saadbinmunir/uk-licence-plate-synthetic-images/)
 
