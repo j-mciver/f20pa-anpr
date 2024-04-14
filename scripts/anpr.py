@@ -489,7 +489,7 @@ def cl_args_handler():
                                                  "dataset. Unspecified limit will default to processing all available "
                                                  "images from the input directory.", required=False)
         parser.add_argument('-s', type=str,
-                            help="Specify the pre-processing pipeline stages which should be run against the dataset."
+                            help="Specify the pre-processing pipeline stages which should be run against the dataset.\n"
                                  "\n1a :- Noise Removal (Bilateral Filtering)"
                                  "\n1b :- Improving Contrast (Adaptive Histogram Equalisation)"
                                  "\n1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding"
