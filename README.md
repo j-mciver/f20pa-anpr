@@ -79,7 +79,7 @@ Output:
 +----------------+
 | Results Output |
 +----------------+
- Input File: /Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1b_1c_1d__v2.xml 
+ Input File: /Users/jmciver/PycharmProjects/f20pa-anpr/xml_files/v2_whiteplate_safe_store/1a_1b_1c_1d_whiteplate_12000.xml 
 
     Accuracy: 98.91667%
     Total processing time (sec): 243.28439
