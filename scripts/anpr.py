@@ -68,8 +68,6 @@ def adaptive_threshold(img):
     cv2.warpAffine + cv2.getRotationMatrix2D:  https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html
 """
 def tilt_correction(th_img, component_mask):
-    # reference: rotated rectangle: https://docs.opencv.org/3.1.0/dd/d49/tutorial_py_contour_features.html
-
     # 1 = cv2.RETR_EXTERNAL (exclude nested/internal contours)
     # 2 = cv2.CHAIN_APPROX_SIMPLE want diagonal lines
     contours, _ = cv2.findContours(component_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -582,18 +580,3 @@ def parse_xml_files(dir):
 
 
 cl_args_handler()
-
-# REFERENCES
-# argparse usage https://docs.python.org/3/library/argparse.html
-# https://techtutorialsx.com/2018/06/02/python-opencv-converting-an-image-to-gray-scale/
-# Bilateral Filter: https://docs.opencv.org/4.x/d4/d13/tutorial_py_filtering.html
-# Peak-Signal to Noise Ratio: (OpenCV) https://shimat.github.io/opencvsharp_docs/html/23f56d6b-49ef-3365-5139-e75712c20fe4.htm
-# otsu's method + adaptive thresholding: https://docs.opencv.org/4.x/d7/d4d/tutorial_py_thresholding.html
-# adaptive historgram equalisation https://pyimagesearch.com/2021/02/01/opencv-histogram-equalization-and-adaptive-histogram-equalization-clahe/
-# cca (identifying NP and characters in input image) https://pyimagesearch.com/2021/02/22/opencv-connected-component-labeling-and-analysis/
-# https://www.geeksforgeeks.org/how-to-display-multiple-images-in-one-figure-correctly-in-matplotlib/
-# https://learnopencv.com/cropping-an-image-using-opencv/#cropping-using-opencv
-# resizing an image (opencv) tutorial reference: https://learnopencv.com/image-resizing-with-opencv/
-# https://docs.opencv.org/4.x/da/d6e/tutorial_py_geometric_transformations.html (tilt correction based on affine transformation)
-# plot_results placing text boxes https://matplotlib.org/3.3.4/gallery/recipes/placing_text_boxes.html
-# sorting python dictionary by values: https://www.freecodecamp.org/news/sort-dictionary-by-value-in-python/
