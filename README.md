@@ -30,11 +30,11 @@ optional arguments:
               available images from the input directory.
               
   -s S        Specify the pre-processing pipeline stages which should be run
-              against the dataset. 1a :- Noise Removal (Bilateral Filtering)
-              
-              1b :- Improving Contrast (Adaptive Histogram Equalisation) 1c :-
-              Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's
-              Thresholding 1d :- Tilt Correction
+              against the dataset. 
+              1a :- Noise Removal (Bilateral Filtering)
+              1b :- Improving Contrast (Adaptive Histogram Equalisation) 
+              1c :- Noise Removal (Adaptive Gaussian Thresholding) (on) | Default: Otsu's Thresholding
+              1d :- Tilt Correction
               
   -p P        Plot and display the results of each pipeline processing stage.
               By default this will write result data to a directory
