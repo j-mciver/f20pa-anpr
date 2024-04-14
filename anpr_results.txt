@@ -1,5 +1,0 @@
---- Result Metrics Output: ---
-Average Reading Accuracy: 100.00%
-Total time taken for 10 inputs: 0.20 seconds
-Average time taken to process each input: 0.02 seconds
-Incorrect Registrations 0/10 (Predicted, Actual): []
