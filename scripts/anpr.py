@@ -7,7 +7,7 @@ import time
 from matplotlib import pyplot as plt
 import numpy as np
 
-from scripts.parse_data import parse_xml, calc_group_tilt_degree_by_accuracy
+from parse_data import parse_xml, calc_group_tilt_degree_by_accuracy
 from write_data import write_to_xml_file, store_results, clear_results
 
 templates_dir = "../templates"
