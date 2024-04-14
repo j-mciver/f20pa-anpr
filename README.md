@@ -10,7 +10,9 @@ Methods are optimised to process the images from `UKLicensePlateData`.
 Significant efforts would be required in refactoring parameters of OpenCV methods for this system
 to work on other sets of input images. 
 
-Input dataset can downloaded from [here](https://www.kaggle.com/datasets/saadbinmunir/uk-licence-plate-synthetic-images/)
+Input dataset can downloaded from [here](https://heriotwatt-my.sharepoint.com/:u:/g/personal/jm2006_hw_ac_uk/EbIe0a8tZztMtIlDMxcwc-wBWHaL0UlYgFAGtyAgI2aCLw?e=WNIw39) (Heriot-Watt University associated accounts only)
+
+Alternate download link from [here](https://www.kaggle.com/datasets/saadbinmunir/uk-licence-plate-synthetic-images/) (Kaggle: requires login)
 
 Libraries Required:
 - `argparse`
