@@ -12,6 +12,15 @@ to work on other sets of input images.
 
 Input dataset can downloaded from [here](https://www.kaggle.com/datasets/saadbinmunir/uk-licence-plate-synthetic-images/)
 
+Libraries Required:
+- `argparse`
+- `sys`
+- `cv2`
+-  `os`
+-  `time`
+- `matplotlib`
+- `numpy` 
+
 ---
 4th Year Undergraduate BSc (Hons) Dissertation Project. John McIver. Heriot-Watt University, Edinburgh. School of
 Mathematical and Computer Sciences. Department of Computer Science. jm2006@hw.ac.uk
