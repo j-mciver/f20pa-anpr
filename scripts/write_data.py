@@ -3,7 +3,7 @@ import xml.etree.ElementTree as ET
 global data
 data = []
 
-xml_dir = "./xml_files/"
+xml_dir = "../xml_files/"
 
 
 def store_results(res):
