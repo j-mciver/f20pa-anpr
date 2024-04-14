@@ -9,6 +9,8 @@ Note, this project is optimised and constructed to process a specific set of com
 Significant efforts would be required in refactoring parameters of OpenCV methods for this system
 to work on other sets input images. 
 
+Input dataset can downloaded from [here](https://www.kaggle.com/datasets/saadbinmunir/uk-licence-plate-synthetic-images/)
+
 ---
 4th Year Undergraduate BSc (Hons) Dissertation Project. John McIver. Heriot-Watt University, Edinburgh. School of
 Mathematical and Computer Sciences. Department of Computer Science. jm2006@hw.ac.uk
